@@ -1,6 +1,6 @@
 module Diffusion
 
-include("funcs/diffusion_funcs.jl")
+include("utils/diffusion_funcs.jl")
 
     const diffusivity = 1.00::Float64
     
@@ -20,8 +20,6 @@ include("funcs/diffusion_funcs.jl")
     const D_left = 0.50::Float64
     const D_right = 1.00::Float64
     
-    # const parentdir = joinpath(pwd(), "..")
-    # const subdir = joinpath(parentdir, "figures/diffusion/")
     const subdir = "figures/diffusion/"
 
     ##########################################################################
