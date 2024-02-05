@@ -1,5 +1,5 @@
 
-using Distributions, Plots, LinearAlgebra, SpecialFunctions
+using Plots, LinearAlgebra, SpecialFunctions
 
 function Crank_Nicolson_step(A::Tridiagonal{Float64, Vector{Float64}}, B::Tridiagonal{Float64, Vector{Float64}}, u_inint::Vector{Float64})
     return A\(B*u_inint)

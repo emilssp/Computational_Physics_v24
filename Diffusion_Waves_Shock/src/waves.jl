@@ -103,5 +103,3 @@ module Waves
     end
 
 end
-
-Waves.sinusoidal_IC()
