@@ -7,7 +7,7 @@ end
 
 function CN_absorbing_BC(u_init::Vector{Float64}, alpha::Float64 )
     #A * U_n+1 = B * U_n
-    n_steps = spacesteps-2
+    n_steps = size(u_init,1)-2
 
     A = Tridiagonal(fill(-alpha/2, n_steps-1),
                     fill(1+alpha, n_steps),

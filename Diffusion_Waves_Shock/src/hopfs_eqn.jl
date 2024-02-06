@@ -24,7 +24,7 @@ module Hopf
         u = Lax_Wandroff_trans(u_init, spacesteps, timesteps; γ)
 
         u_an = trans_anal(u0, x, t; c)
-
+        println(u_an[1])
         anim = @animate for n in 1:10:timesteps
             p1 = plot(x, u[:, n], ylim =(-0.1, 1.1))
             p2 = plot!(x, u_an[:, n], ylim =(-0.1, 1.1))
@@ -50,6 +50,4 @@ module Hopf
 
     ##################################################################################
 end
-
 Hopf.transport_eqn()
-Hopf.hopfs_eqn()
