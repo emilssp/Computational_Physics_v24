@@ -17,17 +17,16 @@ module Waves
     const dt = (h/(2*c))::Float64#1e-4::Float64
     const timesteps = Int64(div(endtime,dt)+1)::Int64
 
+    x = LinRange(0,L, spacesteps)
+    y = LinRange(0,L, spacesteps)
+    time = LinRange(0,endtime, timesteps)
 
+    β = (c*dt/h)^2
+    function print_cfl()
+        println(c*dt/h)
+    end
     ############################# Sinus initial values #################################
     function sinusoidal_IC()
-        # x = reduce(vcat, [0, cumsum(fill(L/(spacesteps-1), spacesteps-1))])
-        # y = reduce(vcat, [0, cumsum(fill(L/(spacesteps-1), spacesteps-1))])
-        x = LinRange(0,L, spacesteps)
-        y = LinRange(0,L, spacesteps)
-
-        time = LinRange(0,endtime, timesteps)
-
-        β = (c*dt/h)^2
 
         u = zeros(spacesteps, spacesteps, timesteps)
 
@@ -38,8 +37,9 @@ module Waves
         u_init[end,:] .= 0
 
         u[:,:,1] = u_init
-                            
-        u = solve_u(u, timesteps, β)
+        β = (c*dt/h)^2                
+        u = solve_u(u,x,y, timesteps, β)
+
         u_an = analytical_solution(x,y,time,spacesteps, timesteps)
         anim = @animate for n in 1:10:timesteps
             p1 = surface(x, y, u_an[:, :, n]', zlim=(-1, 1), c=:thermal, colorbar = false, title = "\n\nAnalytical solution", xlabel = "\$x\$ (a.u.)", ylabel = "\$y\$ (a.u.)", zlabel = "\$u(x,y,t)\$")
@@ -47,13 +47,36 @@ module Waves
             p = plot(p1,p2, layout= (1,2), size = (800,500), suptitle = "\nAnalitical and numerical solution at time t = $(round(time[n], digits = 4))")
         end
 
-        gif(anim, "figures/waves/wave_equation_solution_new.gif", fps=10)
+        difference =0
+        temp = 0
+
+        for i in length(x)
+            for j in length(y)
+                for t in length(time)
+                    temp = abs.(u[i,j,t] .- u_an[i,j,t])
+                    if temp>difference
+                        difference = temp 
+                    end
+                end
+            end
+        end
+        print("Max_err = $difference")
+
+        gif(anim, "./figures/waves/wave_equation_solution_new.gif", fps=10)
+        
+        subplt1 = surface(x, y, u_an[:, :, round(Int, 0.4/dt)]', zlim=(-1, 1), c=:thermal, colorbar = false, title = "\n\nAnalytical solution", xlabel = "\$x\$ (a.u.)", ylabel = "\$y\$ (a.u.)", zlabel = "\$u(x,y,t)\$")
+        subplt2 = surface(x, y, u[:, :, round(Int, 0.4/dt)]', zlim=(-1, 1), c=:thermal, colorbar = false, title = "\n\nNumerical solution", xlabel = "\$x\$ (a.u.)", ylabel = "\$y\$ (a.u.)", zlabel = "\$u(x,y,t)\$")
+        plt = plot(subplt1, subplt2, layout= (1,2), size = (800,500), suptitle = "\nAnalitical and numerical solution at time t = $(round(time[round(Int, 0.4/dt)], digits = 4))")
+
+        savefig(plt, "./figures/waves/sine_02.png")
+
+    
     end
 
     ######################### Test stability #########################################################
     function test_stability()
-        dt = 1.45h/(sqrt(2)*c)
-        endtime = 1.00
+        dt = 0.1
+        endtime = 5.00
         timesteps = Int64(div(endtime,dt)+1)::Int64
 
         u = zeros(spacesteps, spacesteps, timesteps)
@@ -72,12 +95,14 @@ module Waves
             surface(x, y, u[:, :, n]', zlim=(-1, 1), c=:thermal, colorbar = false, title = "\n\nNumerical solution", xlabel = "\$x\$ (a.u.)", ylabel = "\$y\$ (a.u.)", zlabel = "\$u(x,y,t)\$")
         end
 
-        gif(anim, "figures/waves/wave_equation_solution_test.gif", fps=10)
+        gif(anim, "./figures/waves/wave_equation_solution_test.gif", fps=10)
     end
 
     function membrane_wave()
 
-        dt = h/(2*c)
+        dt = 4*h/(2*c)
+        print(dt)
+        print(c)
         endtime = 3.00
         timesteps = Int64(div(endtime,dt)+1)::Int64
 
@@ -93,13 +118,28 @@ module Waves
 
         u[:,:,1] = u_init
 
-        u = solve_u(u, timesteps, β)
+        u = solve_u(u, x, y, timesteps, β)
         u_an = analytical_solution(x,y,time, spacesteps,timesteps)
 
         anim3 = @animate for n in 1:timesteps
             surface(x, y, u[:, :, n]', zlim=(-1, 1), c=:thermal, colorbar = false, title = "Membrane react to deformation t = $(round(time[n], digits = 2))", xlabel = "\$x\$ (a.u.)", ylabel = "\$y\$ (a.u.)", zlabel = "\$u(x,y,t)\$")
         end
-        gif(anim3, "figures/waves/wave_equation_membrane.gif", fps=20)
+        gif(anim3, "./figures/waves/wave_equation_membrane_tst.gif", fps=20)
+        
+        
+        subplt1 = surface(x, y, u[:, :, 1]', zlim=(-1, 1), c=:thermal, colorbar = false, title = "\n\n \$u(0,x,y)\$", xlabel = "\$x\$ (a.u.)", ylabel = "\$y\$ (a.u.)", zlabel = "\$u(x,y,t)\$")
+        subplt2 = surface(x, y, u[:, :, round(Int, 0.3/dt)]', zlim=(-1, 1), c=:thermal, colorbar = false, title = "\n\n \$u(0.3,x,y)\$", xlabel = "\$x\$ (a.u.)", ylabel = "\$y\$ (a.u.)", zlabel = "\$u(x,y,t)\$")
+        subplt3 = surface(x, y, u[:, :, round(Int, 1.2/dt)]', zlim=(-1, 1), c=:thermal, colorbar = false, title = "\n\n \$u(1.2,x,y)\$", xlabel = "\$x\$ (a.u.)", ylabel = "\$y\$ (a.u.)", zlabel = "\$u(x,y,t)\$")
+        subplt4 = surface(x, y, u[:, :, round(Int, 2/dt)]', zlim=(-1, 1), c=:thermal, colorbar = false, title = "\n\n \$u(2.0,x,y)\$", xlabel = "\$x\$ (a.u.)", ylabel = "\$y\$ (a.u.)", zlabel = "\$u(x,y,t)\$")
+
+
+        plt = plot(subplt1, subplt2, layout= (1,2), size = (800,500), suptitle = "\nMembrane reacts to deformation")
+        plt2 = plot(subplt3, subplt4, layout= (1,2), size = (800,500))
+        savefig(plt, "./figures/waves/membrane_test.png")
+        savefig(plt2, "./figures/waves/membrane2_test.png")
+
     end
 
 end
+Waves.sinusoidal_IC()
+()

@@ -88,7 +88,7 @@ function left_or_right(x,x_boundary)
     end
 end
 
-function step_diffusivity(x::Float64,x_boundary::Float64)
+function step_diffusivity(x::Float64,x_boundary::Float64; D_left = 1.00 ,D_right = 1.00)
     
     if left_or_right(x,x_boundary)
         return D_left*dt*spacesteps^2/L^2
@@ -175,7 +175,7 @@ function reflecting_step(u_init::Vector{Float64}, alphas::Vector{Float64})
 end
 
 
-function A_prefix_r(t, x0, x_boundary)
+function A_prefix_r(t, x0, D_left, D_right)
 
     erf_right = erf(x0 / sqrt(4*D_right*t))-1
     erf_left = erf(x0 / sqrt(4*D_left*t))-1
@@ -186,21 +186,21 @@ function A_prefix_r(t, x0, x_boundary)
     return 1/denominator
 end
 
-function A_prefix_l(t, x0, x_boundary)
+function A_prefix_l(t, x0, D_left, D_right)
 
 
     exponent = (D_right - D_left)*(x0)^2/(4*D_right*D_left*t)
 
-    return A_prefix_r(t, x0, x_boundary)*sqrt(D_left/D_right)*exp(exponent)
+    return A_prefix_r(t, x0,D_left,D_right)*sqrt(D_left/D_right)*exp(exponent)
     
 end
 
-function u_an_step_D(x, t, x0, x_boundary)
+function u_an_step_D(x, t, x0, x_boundary; D_left = 1.00, D_right = 1.00)
     # if t == 0 return 0 end
     if left_or_right(x,x_boundary)
-        return u0_tilda*A_prefix_l(t, x0, x_boundary)*exp(-(x-x0)^2/(4*D_left*t))/sqrt(4*pi*D_left*t)
+        return 2*u0_tilda*A_prefix_l(t, x0, D_left,D_right)*exp(-(x-x0)^2/(4*D_left*t))/sqrt(4*pi*D_left*t)
     else
-        return u0_tilda*A_prefix_r(t, x0, x_boundary)*exp(-(x-x0)^2/(4*D_right*t))/sqrt(4*pi*D_right*t)
+        return 2*u0_tilda*A_prefix_r(t, x0,D_left,D_right)*exp(-(x-x0)^2/(4*D_right*t))/sqrt(4*pi*D_right*t)
     end
     
 end
@@ -214,7 +214,7 @@ function cubic_func(x::Float64; C = 1.00)
 end
 
 function linear_func(x::Float64; C = 1.00)
-    return C*x + 1
+    return C*x + 0.1
 end
 
 function variable_diffusivity(f, x; C = 1.00)

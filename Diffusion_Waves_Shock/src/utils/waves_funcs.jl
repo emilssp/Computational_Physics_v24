@@ -1,11 +1,14 @@
-function solve_u(u::Array{Float64,3}, timesteps::Int64, β)
-
+function solve_u(u::Array{Float64,3}, x, y, timesteps::Int64, β)
+    center = [0.5,0.5]
+    radius = 0.5
+    mask = ((x' .- center[1]).^2 .+ (y .- center[2]).^2 .<= radius^2)
     u[2:end-1, 2:end-1, 2] = u[2:end-1, 2:end-1, 1] + β * (u[2:end-1, 3:end, 1] - 2*u[2:end-1, 2:end-1, 1] + u[2:end-1, 1:end-2, 1] +
                                 u[3:end, 2:end-1, 1] - 2*u[2:end-1, 2:end-1, 1] + u[1:end-2, 2:end-1, 1])
 
     for n in 2:timesteps-1
-            u[2:end-1, 2:end-1, n+1] = 2*u[2:end-1, 2:end-1, n] - u[2:end-1, 2:end-1, n-1] + β * (u[2:end-1, 3:end, n] - 2*u[2:end-1, 2:end-1, n] + u[2:end-1, 1:end-2, n] +
-                                                                        u[3:end, 2:end-1, n] - 2*u[2:end-1, 2:end-1, n] + u[1:end-2, 2:end-1, n])        
+        u[2:end-1, 2:end-1, n+1] = 2*u[2:end-1, 2:end-1, n] - u[2:end-1, 2:end-1, n-1] + β * (u[2:end-1, 3:end, n] - 2*u[2:end-1, 2:end-1, n] + u[2:end-1, 1:end-2, n] +
+                                                                    u[3:end, 2:end-1, n] - 2*u[2:end-1, 2:end-1, n] + u[1:end-2, 2:end-1, n])  
+        u[:,:,n+1] =u[:,:,n+1] .* mask      
     end
     return u
 end
