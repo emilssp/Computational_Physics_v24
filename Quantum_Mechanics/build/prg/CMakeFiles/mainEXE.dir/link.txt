@@ -1,0 +1,3 @@
+"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\mainEXE.dir/objects.a
+C:\TDT4102-mingw64\bin\llvm-ar.exe qc CMakeFiles\mainEXE.dir/objects.a @CMakeFiles\mainEXE.dir\objects1.rsp
+C:\TDT4102-mingw64\bin\clang++.exe -g -Wl,--whole-archive CMakeFiles\mainEXE.dir/objects.a -Wl,--no-whole-archive -o mainEXE.exe -Wl,--out-implib,libmainEXE.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\mainEXE.dir\linkLibs.rsp
