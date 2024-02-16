@@ -19,11 +19,17 @@ module Hopf
         
         x = LinRange(0, L, spacesteps)
         t = LinRange(0, endtime, timesteps)
-        u_init = shock.(x)
+        u_init = step_func.(x)
 
         u = Lax_Wandroff_trans(u_init, spacesteps, timesteps; γ)
-        u_an = trans_anal(u0, x, t; c)
-
+        u_an = trans_anal(step_func, x, t; c)
+        
+        difference = zeros(timesteps)
+        
+        for i in length(timesteps)
+            difference[i] = maximum(abs.(u[i] .- u_an[i,:]))
+        end
+        print(maximum(difference))
         p1 = plot(xlabel = "\$x\$ (a.u.)", ylabel = "\$u(x,t)\$", ylims = (-0.1,1.4), title = "\nCFL = $(round(γ, digits = 3))")
         plot!(x, u[:, 20], label = "t = $(round(t[10],digits = 3))")
         plot!(x, u[:, 100], label = "t = $(round(t[100],digits = 3))")
@@ -89,5 +95,5 @@ end
 
 
 Hopf.transport_eqn()
-Hopf.hopfs_eqn()        
+# Hopf.hopfs_eqn()        
 
