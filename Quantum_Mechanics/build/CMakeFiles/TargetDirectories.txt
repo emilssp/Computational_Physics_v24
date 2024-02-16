@@ -1,8 +1,0 @@
-D:/Uni/Computational Physics/Computational_Physics_v24/Quantum_Mechanics/build/CMakeFiles/edit_cache.dir
-D:/Uni/Computational Physics/Computational_Physics_v24/Quantum_Mechanics/build/CMakeFiles/rebuild_cache.dir
-D:/Uni/Computational Physics/Computational_Physics_v24/Quantum_Mechanics/build/src/CMakeFiles/QM_lib.dir
-D:/Uni/Computational Physics/Computational_Physics_v24/Quantum_Mechanics/build/src/CMakeFiles/edit_cache.dir
-D:/Uni/Computational Physics/Computational_Physics_v24/Quantum_Mechanics/build/src/CMakeFiles/rebuild_cache.dir
-D:/Uni/Computational Physics/Computational_Physics_v24/Quantum_Mechanics/build/prg/CMakeFiles/mainEXE.dir
-D:/Uni/Computational Physics/Computational_Physics_v24/Quantum_Mechanics/build/prg/CMakeFiles/edit_cache.dir
-D:/Uni/Computational Physics/Computational_Physics_v24/Quantum_Mechanics/build/prg/CMakeFiles/rebuild_cache.dir

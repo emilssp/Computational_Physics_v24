@@ -1,2 +1,0 @@
-C:\TDT4102-mingw64\bin\llvm-ar.exe qc libQM_lib.a CMakeFiles/QM_lib.dir/functions.cpp.obj CMakeFiles/QM_lib.dir/params.cpp.obj
-C:\TDT4102-mingw64\bin\llvm-ranlib.exe libQM_lib.a
