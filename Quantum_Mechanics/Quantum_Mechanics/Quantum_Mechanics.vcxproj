@@ -104,13 +104,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Uni\Computational Physics\Computational_Physics_v24\Quantum_Mechanics\src\armadillo-12.8.0\include;D:\Uni\Computational Physics\Computational_Physics_v24\Quantum_Mechanics\src\mkl\2024.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Uni\Computational Physics\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\Uni\Computational Physics\Computational_Physics_v24\Quantum_Mechanics\src\mkl\2024.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>mkl_core.lib;mkl_sequential.lib;mkl_intel_lp64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>lapack.lib;openblas.lib;armadillo.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Uni\Computational Physics\vcpkg\installed\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -133,9 +133,11 @@
     <ClCompile Include="functions.cpp" />
     <ClCompile Include="params.cpp" />
     <ClCompile Include="Quantum_Mechanics.cpp" />
+    <ClCompile Include="tridiagonal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="functions.hpp" />
+    <ClInclude Include="tridiagonal.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

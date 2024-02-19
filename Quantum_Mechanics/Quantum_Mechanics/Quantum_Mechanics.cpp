@@ -2,26 +2,36 @@
 //
 
 #include <iostream>
+#include <thread>
+
+#include <armadillo>
 #include "functions.hpp"
+#include "tridiagonal.hpp"
 
 using namespace std;
 using namespace arma;
 
 int main()
 {
+	cout << "Armadillo version: " << arma_version::as_string() << endl;
+
+
 	cout<<"############################### PROGRAM STARTS HERE ################################################"<<endl;
 	arma_rng::set_seed_random();
 	vec x = linspace(0.0, L, SPACESTEPS+2);
 
-	vec UD = zeros(SPACESTEPS - 1) - 1.00 / (dx * dx);
-	vec MD = zeros(SPACESTEPS) + 2.00 / (dx * dx);
-	vec LD = zeros(SPACESTEPS - 1) - 1.00 / (dx * dx);
+	cout << dx  << endl;
 
-	mat A = tridiagonal_matrix(LD, MD, UD);
+	vec UD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
+	vec MD = zeros(SPACESTEPS) + (2.00 / (dx * dx));
+	vec LD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
+	
+	TridiagonalMatrix A = { LD,MD,UD };
+	EVPsol sol = A.solveEVP();
+	eigToFile(sol, "../data/raw");
+	
+	cout << eigFromFile("../data/raw").eigenvals << endl;
 
-	//solveEVP_to_txt(A, "../data/raw");
-
-	return 0;
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
