@@ -27,6 +27,12 @@
     <ClCompile Include="tridiagonal.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
+    <ClCompile Include="WaveFunction.hpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WaveFunction.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="functions.hpp">

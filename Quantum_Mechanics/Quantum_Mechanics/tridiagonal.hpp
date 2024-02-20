@@ -8,10 +8,11 @@ using namespace std;
 
 class TridiagonalMatrix {
 	sp_mat A;
-	const int k = 20;
+
+	const int k = 200;
 
 public:
 	TridiagonalMatrix();
 	TridiagonalMatrix(vec LD, vec MD, vec UD);
-	EVPsol solveEVP();
+	void solveEVP(EVPsol& sol);
 };

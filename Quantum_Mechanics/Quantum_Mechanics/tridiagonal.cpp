@@ -17,7 +17,7 @@ TridiagonalMatrix::TridiagonalMatrix(vec LD, vec MD, vec UD)
 	this->A = A;
 }
 
-EVPsol TridiagonalMatrix::solveEVP()
+void TridiagonalMatrix::solveEVP(EVPsol& sol)
 {
 	cout << "Solving EVP..." << endl;
 
@@ -28,9 +28,10 @@ EVPsol TridiagonalMatrix::solveEVP()
 	//eigvec *= -1;
 
 	cout << "Done with eigenvalues and eigenvectors." << endl;
-	EVPsol sol;
 	sol.eigenvals = eigvals;
 	sol.eigenvecs = eigvecs;
-	return sol;
+	sol.eigenvecs.insert_rows(0, 1); // Insert a row of zeros at the top
+	sol.eigenvecs.insert_rows(sol.eigenvecs.n_rows, 1);
+
 }
 

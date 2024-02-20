@@ -6,8 +6,8 @@ void eigToFile(EVPsol sol, std::string path)
 	cout << "Exporting data..." << endl;
 
 	// Write eigenvalues and eigenvectors to text files
-	sol.eigenvals.save(path + "/eigenvalues.txt", raw_ascii);
-	sol.eigenvecs.save(path + "/eigenvectors.txt", raw_ascii);
+	sol.eigenvals.save(path + "/eigenvalues.csv", csv_ascii);
+	sol.eigenvecs.save(path + "/eigenvectors.csv", csv_ascii);
 
 	cout << "Data exported to " << path << endl;
 }
@@ -17,25 +17,25 @@ EVPsol eigFromFile(std::string path)
 	cout << "Loading eigenvalues..." << endl;
 	EVPsol sol;
 	vec eigvals;
-	std::string eigenvalues_file = path + "/eigenvalues.txt";
+	std::string eigenvalues_file = path + "/eigenvalues.csv";
 
 	// Load eigenvalues
 	if (!eigvals.load(eigenvalues_file)) {
-		std::cerr << "Error loading eigenvalues file: " << eigenvalues_file << std::endl;
+		cerr << "Error loading eigenvalues file: " << eigenvalues_file << endl;
 		return sol;
 	}
 	sol.eigenvals = eigvals;
 	
 	cout << "Loading eigenvectors..." << endl;
 
-	std::string eigenvectors_file = path + "/eigenvectors.txt";
+	std::string eigenvectors_file = path + "/eigenvectors.csv";
 
 	// Armadillo vectors and matrix to store eigenvalues and eigenvectors
 	mat eigvecs;
 
 	// Load eigenvectors
 	if (!eigvecs.load(eigenvectors_file)) {
-		std::cerr << "Error loading eigenvectors file: " << eigenvectors_file << std::endl;
+		cerr << "Error loading eigenvectors file: " << eigenvectors_file << endl;
 		return sol;
 	}
 	sol.eigenvecs = eigvecs;
