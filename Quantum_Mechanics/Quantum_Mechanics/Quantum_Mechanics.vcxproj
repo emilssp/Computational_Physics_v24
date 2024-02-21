@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Uni\Computational Physics\libs\mkl\2024.0\include;D:\Uni\Computational Physics\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Uni\Computational Physics\Computational_Physics_v24\Quantum_Mechanics\include;D:\Uni\Computational Physics\libs\mkl\2024.0\include;D:\Uni\Computational Physics\vcpkg\installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,16 +130,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="functions.cpp" />
-    <ClCompile Include="params.cpp" />
+    <ClCompile Include="..\include\params.cpp" />
+    <ClCompile Include="..\src\functions.cpp" />
+    <ClCompile Include="..\src\tridiagonal.cpp" />
+    <ClCompile Include="..\src\WaveFunction.cpp" />
     <ClCompile Include="Quantum_Mechanics.cpp" />
-    <ClCompile Include="tridiagonal.cpp" />
-    <ClCompile Include="WaveFunction.cpp" />
-    <ClCompile Include="WaveFunction.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="functions.hpp" />
-    <ClInclude Include="tridiagonal.hpp" />
+    <ClInclude Include="..\include\functions.hpp" />
+    <ClInclude Include="..\include\tridiagonal.hpp" />
+    <ClInclude Include="..\include\WaveFunction.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

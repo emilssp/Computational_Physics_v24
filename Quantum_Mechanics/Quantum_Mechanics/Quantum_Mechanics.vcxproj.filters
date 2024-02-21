@@ -18,27 +18,27 @@
     <ClCompile Include="Quantum_Mechanics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="functions.cpp">
-      <Filter>Resource Files</Filter>
+    <ClCompile Include="..\include\params.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="params.cpp">
-      <Filter>Resource Files</Filter>
+    <ClCompile Include="..\src\functions.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tridiagonal.cpp">
-      <Filter>Resource Files</Filter>
+    <ClCompile Include="..\src\tridiagonal.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WaveFunction.hpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WaveFunction.cpp">
-      <Filter>Resource Files</Filter>
+    <ClCompile Include="..\src\WaveFunction.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="functions.hpp">
+    <ClInclude Include="..\include\functions.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tridiagonal.hpp">
+    <ClInclude Include="..\include\tridiagonal.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\WaveFunction.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
