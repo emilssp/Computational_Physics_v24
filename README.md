@@ -1,2 +1,5 @@
 # Computational_Physics_v24
  Projects in computational physics in Computational Physics spring 2024
+
+ 1. Diffusion, Wave and Advection equations. Hopf's equation.
+ 2. Quantum mechanics. Two-level system.
