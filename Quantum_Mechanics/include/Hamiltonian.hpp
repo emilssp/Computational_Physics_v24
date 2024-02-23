@@ -5,15 +5,16 @@ class Hamiltonian{
 	EVPsol sol;
 	void solveEVP();
 	int k = 250;
+	vec V;
 public:
 
 	Hamiltonian();
+
 	Hamiltonian(EVPsol sol);
-	Hamiltonian(string path);
+	Hamiltonian(string path, string name);
 
 	Hamiltonian(vec V_x);
 	Hamiltonian(vec V_x, EVPsol sol);
-	Hamiltonian(vec V_x, string path);
 
 	EVPsol getSol();
 	void toFile(string path, string name);

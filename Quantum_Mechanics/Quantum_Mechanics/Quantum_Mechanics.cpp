@@ -27,8 +27,8 @@ int main()
 	vec x_ = x.subvec(1, x.n_rows - 2);
 	cout <<"dx = "<< dx << endl;
 
-/*
 
+/*
 //##############################################################
 //####					Particle in box			   			####
 //##############################################################
@@ -55,13 +55,13 @@ int main()
 	Hamiltonian H{ RAW_PATH };
 	
  	vec init = H.getSol().eigenvecs.col(0);
-	WaveFunction psi{H.getSol(), init};
+	WaveFunction psi{H.getSol(), init, END_TIME};
 	psi.saveToFile(RAW_PATH, "wavefunction_boring");
 	WaveFunction psi{ H.getSol(), init};
 	psi.saveToFile(RAW_PATH, "wavefunction_boring");
 	
 	vec init = sqrt(0.5) * (H.getSol().eigenvecs.col(0) + H.getSol().eigenvecs.col(1));
-	WaveFunction psi{H.getSol(), init};
+	WaveFunction psi{H.getSol(), init,END_TIME};
 	psi.saveToFile(RAW_PATH, "wavefunction1");
 	WaveFunction psi{ H.getSol(), init};
 	psi.saveToFile(RAW_PATH, "wavefunction1");
@@ -69,7 +69,7 @@ int main()
 	vec init = zeros(SPACESTEPS + 2);
 	init.subvec(1, init.n_rows-2) = arma::exp(-(x.subvec(1, init.n_rows - 2) - 0.5 * L) % (x.subvec(1, init.n_rows - 2) - 0.5 * L) / dx);
 	init = normalise(init);
-	WaveFunction psi{ H.getSol(), init};
+	WaveFunction psi{ H.getSol(), init, END_TIME};
 	psi.saveToFile(RAW_PATH, "wavefunction_delta");
 
 */
@@ -78,16 +78,24 @@ int main()
 //####			Particle in box	with a Barrier				####
 //##############################################################
 	
-	long double V0 = 0;
+	double V0 = 500;
 
 	vec V = ones(SPACESTEPS) * V0;
 
 	uvec indices = find(x < (L / 3) || x >(2 * L / 3));
 	V.elem(indices).zeros();
-	//cout << V;
-	
 	Hamiltonian H{ V };
-	H.toFile(RAW_PATH, "barrier0");
+	H.toFile(RAW_PATH, "barrier500");
 
+	vec init = (H.getSol().eigenvecs.col(0) + H.getSol().eigenvecs.col(1))/sqrt(2);
+	double cutoffTime = 10 * pi / (H.getSol().eigenvals(1) - H.getSol().eigenvals(0));
+	cout << "Cutoff time t' = " << cutoffTime << "\n";
+	cout << "lambda_1 = " << H.getSol().eigenvals(0) << "\n";
+	cout << "lambda_2 = " << H.getSol().eigenvals(1) << endl;
+
+
+	WaveFunction psi{ H.getSol(), init, cutoffTime };
+	psi.saveToFile(RAW_PATH, "barrier500_10T");
+	
 	return 0;
 }

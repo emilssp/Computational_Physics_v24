@@ -23,12 +23,12 @@ void WaveFunction::alphas(mat eigenvecs, vec init)
 	cout << "Calculating coefficients finished." << endl;
 }
 
-WaveFunction::WaveFunction(string path, vec init) {
+WaveFunction::WaveFunction(string path, string name, vec init, double time) {
 
-	EVPsol sol = eigFromFile("../data/raw");
+	EVPsol sol = eigFromFile(path, name);
 	int N = sol.eigenvecs.n_cols;
 
-	this->time = linspace(0, END_TIME, TIMESTEPS);
+	this->time = linspace(0, time, TIMESTEPS);
 	this->alpha_n = zeros(N);
 	this->exponential = zeros<cx_mat>(TIMESTEPS, N);
 	this->wave = zeros<cx_mat>(sol.eigenvecs.n_rows, TIMESTEPS);
@@ -47,11 +47,11 @@ WaveFunction::WaveFunction(string path, vec init) {
 
 }
 
-WaveFunction::WaveFunction(EVPsol sol, vec init) {
+WaveFunction::WaveFunction(EVPsol sol, vec init, double time) {
 	
 	int N = sol.eigenvecs.n_cols;
 
-	this->time = linspace(0, END_TIME, TIMESTEPS);
+	this->time = linspace(0, time, TIMESTEPS);
 	this->alpha_n = zeros(N);
 	this->exponential = zeros<cx_mat>(TIMESTEPS, N);
 	this->wave = zeros<cx_mat>(sol.eigenvecs.n_rows, TIMESTEPS);
@@ -84,12 +84,13 @@ WaveFunction::WaveFunction(EVPsol sol, vec init) {
 	cout << "Wavefunction finished." << endl;
 }
 
-void WaveFunction::saveToFile(string path, string filename)
+
+void WaveFunction::saveToFile(string path, string name)
 {
 	cout << "Exporting data..." << endl;
 
 	// Write eigenvalues and eigenvectors to text files
-	this->wave.save(path + "/"+filename+".csv", csv_ascii);
+	this->wave.save(path + "/wavefunction_"+name+".csv", csv_ascii);
 
-	cout << "Data exported to " << path << endl;
+	cout << "Data exported to " << path + "/wavefunction_" + name + ".csv" << endl;
 }

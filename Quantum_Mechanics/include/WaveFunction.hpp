@@ -15,7 +15,7 @@ class WaveFunction {
 	void exponent(vec time, vec eigenvals);
 
 public:
-	WaveFunction(string path, vec init);
-	WaveFunction(EVPsol sol, vec init);
+	WaveFunction(string path, string name, vec init, double time);
+	WaveFunction(EVPsol sol, vec init, double time);
 	void saveToFile(string path, string filename);
 };

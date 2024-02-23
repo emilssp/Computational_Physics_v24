@@ -12,12 +12,12 @@ void eigToFile(EVPsol sol, string path, string name)
 	cout << "Data exported to " << path << endl;
 }
 
-EVPsol eigFromFile(string path)
+EVPsol eigFromFile(string path, string name)
 {
 	cout << "Loading eigenvalues..." << endl;
 	EVPsol sol;
 	vec eigvals;
-	std::string eigenvalues_file = path + "/eigenvalues.csv";
+	std::string eigenvalues_file = path + "/eigenvalues_" + name + ".csv";
 
 	// Load eigenvalues
 	if (!eigvals.load(eigenvalues_file)) {
@@ -28,7 +28,7 @@ EVPsol eigFromFile(string path)
 	
 	cout << "Loading eigenvectors..." << endl;
 
-	std::string eigenvectors_file = path + "/eigenvectors.csv";
+	std::string eigenvectors_file = path + "/eigenvectors_" + name + ".csv";
 
 	// Armadillo vectors and matrix to store eigenvalues and eigenvectors
 	mat eigvecs;
@@ -42,4 +42,22 @@ EVPsol eigFromFile(string path)
 
 	cout << "Finished loading data." << endl;
 	return sol;
+}
+
+vec potFromFile(string path, string name) {
+	cout << "Loading potential..." << endl;
+	vec pot;
+
+	std::string potential_file = path + "/potential_" + name + ".csv";
+
+	// Load eigenvalues
+	if (!pot.load(potential_file)) {
+		cerr << "Error loading potential file: " << potential_file << endl;
+		return pot;
+	}
+	return pot;
+}
+
+void potToFile(vec V, string path, string name) {
+	V.save(path + "/potential_" + name + ".csv", csv_ascii);
 }

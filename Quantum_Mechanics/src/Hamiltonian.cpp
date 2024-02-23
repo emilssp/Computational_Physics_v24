@@ -7,6 +7,7 @@ Hamiltonian::Hamiltonian()
 	vec MD = zeros(SPACESTEPS) + (2.00 / (dx * dx));
 	vec LD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
 
+	this->V = zeros(SPACESTEPS);
 	this->H = TridiagonalMatrix(LD, MD, UD);
 
 	solveEVP();
@@ -17,61 +18,51 @@ Hamiltonian::Hamiltonian(EVPsol sol)
 	vec MD = zeros(SPACESTEPS) + (2.00 / (dx * dx));
 	vec LD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
 
+	this->V = zeros(SPACESTEPS);
 	this->H = TridiagonalMatrix(LD, MD, UD);
 	this->sol = sol;
 }
 
-Hamiltonian::Hamiltonian(string path)
+Hamiltonian::Hamiltonian(string path, string name)
 {
+
 	vec UD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
 	vec MD = zeros(SPACESTEPS) + (2.00 / (dx * dx));
 	vec LD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
 
+	this->V = potFromFile(path, name);
 	this->H = TridiagonalMatrix(LD, MD, UD);
-	this->sol = eigFromFile(path);
+	this->sol = eigFromFile(path, name);
+
 }
 
-Hamiltonian::Hamiltonian(vec V_x)
+Hamiltonian::Hamiltonian(vec V_in)
 {
 	vec UD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
 	vec MD = zeros(SPACESTEPS) + (2.00 / (dx * dx));
 	vec LD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
 
-	sp_mat V = sp_mat(diagmat(V_x));
+	sp_mat V = sp_mat(diagmat(V_in));
 	this->H = TridiagonalMatrix(LD, MD, UD);
 	this->H.A = this->H.A + V;
-
+	this->V = V_in;
 	solveEVP();
 }
 
-Hamiltonian::Hamiltonian(vec V_x, EVPsol sol) 
+Hamiltonian::Hamiltonian(vec V_in, EVPsol sol) 
 {
 	vec UD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
 	vec MD = zeros(SPACESTEPS) + (2.00 / (dx * dx));
 	vec LD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
 
-	sp_mat V = sp_mat(diagmat(V_x));
+	sp_mat V = sp_mat(diagmat(V_in));
 	
+	this->V = V_in;
 	this->H = TridiagonalMatrix(LD, MD, UD);
 	this->H.A = this->H.A + V;
 
 	this->sol = sol;
 }
-
-Hamiltonian::Hamiltonian(vec V_x, string path)
-{
-	vec UD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
-	vec MD = zeros(SPACESTEPS) + (2.00 / (dx * dx));
-	vec LD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
-
-	sp_mat V = sp_mat(diagmat(V_x));
-
-	this->H = TridiagonalMatrix(LD, MD, UD);
-	this->H.A = this->H.A + V;
-
-	this->sol = eigFromFile(path);
-}
-
 
 void Hamiltonian::solveEVP()
 {
@@ -86,6 +77,8 @@ EVPsol Hamiltonian::getSol()
 void Hamiltonian::toFile(string path, string name)
 {
 	eigToFile(this->sol, path, name);
+
+	potToFile(this->V, path, name);
 }
 
 ostream& operator<<(ostream& os, const Hamiltonian& H)
