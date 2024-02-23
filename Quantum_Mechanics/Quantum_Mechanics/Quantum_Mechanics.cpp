@@ -5,9 +5,13 @@
 #include <thread>
 
 #include <armadillo>
+
 #include "functions.hpp"
+
 #include "tridiagonal.hpp"
+#include "Hamiltonian.hpp"
 #include "WaveFunction.hpp"
+
 
 using namespace std;
 using namespace arma;
@@ -19,61 +23,71 @@ int main()
 
 	cout<<"######################################## PROGRAM STARTS HERE ################################################"<<endl;
 	arma_rng::set_seed_random();
-	vec x = linspace(0.0, L, SPACESTEPS+2);
-
+	vec x = linspace(0.0, L, SPACESTEPS);
+	vec x_ = x.subvec(1, x.n_rows - 2);
 	cout <<"dx = "<< dx << endl;
+
+/*
+
+//##############################################################
+//####					Particle in box			   			####
+//##############################################################
+//   (Uncomment to build a free particle in a box Hamiltonian)
+//	Solve an eigenvalue problem. 
+
+	Hamiltonian H;
+	H.toFile(RAW_PATH, "infwell");
+*/
+
+
+/*
+//##############################################################
+//####		Particle in box wave function different IC		####
+//##############################################################
+
+	//Builds the wavefunction
+	//Uncomment to build a wavefunction with
+ 	//psi_init = psi_1
+	//psi_init = psi_1 + psi_2 / sqrt(2)
+	//psi_init = delta(x-L/2)
+
+
+	Hamiltonian H{ RAW_PATH };
 	
-	//##############################################################
-	// //Solve an eigenvalue problem. 
-	// //Uncomment this block to solve and write to file.
-	// 
-	vec UD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
-	vec MD = zeros(SPACESTEPS) + (2.00 / (dx * dx));
-	vec LD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
-	TridiagonalMatrix A = { LD,MD,UD };
-	// 
-	EVPsol sol;
-	thread th (&TridiagonalMatrix::solveEVP, &A, ref(sol));
-	th.join();
-	eigToFile(sol, RAW_PATH);
+ 	vec init = H.getSol().eigenvecs.col(0);
+	WaveFunction psi{H.getSol(), init};
+	psi.saveToFile(RAW_PATH, "wavefunction_boring");
+	WaveFunction psi{ H.getSol(), init};
+	psi.saveToFile(RAW_PATH, "wavefunction_boring");
+	
+	vec init = sqrt(0.5) * (H.getSol().eigenvecs.col(0) + H.getSol().eigenvecs.col(1));
+	WaveFunction psi{H.getSol(), init};
+	psi.saveToFile(RAW_PATH, "wavefunction1");
+	WaveFunction psi{ H.getSol(), init};
+	psi.saveToFile(RAW_PATH, "wavefunction1");
 
-
-	//EVPsol sol = eigFromFile(RAW_PATH);
-	//vec init = sol.eigenvecs.col(0);
-	//WaveFunction psi{ sol, init };
-	//psi.saveToFile(RAW_PATH, "wavefunction_boring");
-
-
-
-	// // Builds the wavefunction
-	// // Uncomment to build a wavefunction with
-	// // psi_init = psi_1 + psi_2 / sqrt(2) 
-	//
-	//EVPsol sol = eigFromFile(RAW_PATH); 
-	//vec init = sqrt(0.5) * (sol.eigenvecs.col(0) + sol.eigenvecs.col(1));
-	//WaveFunction psi{ sol, init};
-	//psi.saveToFile(RAW_PATH, "wavefunction1");
-	//WaveFunction psi{ sol, init};
-	//psi.saveToFile(RAW_PATH, "wavefunction1");
-
-
-	//EVPsol sol = eigFromFile(RAW_PATH);
 	vec init = zeros(SPACESTEPS + 2);
-	init((SPACESTEPS + 2) / 2) = 1;
-	WaveFunction psi{ sol, init };
+	init.subvec(1, init.n_rows-2) = arma::exp(-(x.subvec(1, init.n_rows - 2) - 0.5 * L) % (x.subvec(1, init.n_rows - 2) - 0.5 * L) / dx);
+	init = normalise(init);
+	WaveFunction psi{ H.getSol(), init};
 	psi.saveToFile(RAW_PATH, "wavefunction_delta");
 
+*/
+
+//##############################################################
+//####			Particle in box	with a Barrier				####
+//##############################################################
+	
+	long double V0 = 0;
+
+	vec V = ones(SPACESTEPS) * V0;
+
+	uvec indices = find(x < (L / 3) || x >(2 * L / 3));
+	V.elem(indices).zeros();
+	//cout << V;
+	
+	Hamiltonian H{ V };
+	H.toFile(RAW_PATH, "barrier0");
 
 	return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file

@@ -1,18 +1,18 @@
 #pragma once
 #include "functions.hpp"
 
-void eigToFile(EVPsol sol, std::string path)
+void eigToFile(EVPsol sol, string path, string name)
 {
 	cout << "Exporting data..." << endl;
 
 	// Write eigenvalues and eigenvectors to text files
-	sol.eigenvals.save(path + "/eigenvalues.csv", csv_ascii);
-	sol.eigenvecs.save(path + "/eigenvectors.csv", csv_ascii);
+	sol.eigenvals.save(path + "/eigenvalues_" + name + ".csv", csv_ascii);
+	sol.eigenvecs.save(path + "/eigenvectors_" + name + ".csv", csv_ascii);
 
 	cout << "Data exported to " << path << endl;
 }
 
-EVPsol eigFromFile(std::string path)
+EVPsol eigFromFile(string path)
 {
 	cout << "Loading eigenvalues..." << endl;
 	EVPsol sol;

@@ -13,5 +13,5 @@ struct EVPsol {
 	mat eigenvecs;
 };
 
-void eigToFile(EVPsol sol, std::string path);
-EVPsol eigFromFile(std::string path);	//Loads the eigenvectors from the txt file
+void eigToFile(EVPsol sol, string path, string name);
+EVPsol eigFromFile(string path);	//Loads the eigenvectors from the txt file

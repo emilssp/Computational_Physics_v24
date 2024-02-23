@@ -132,12 +132,14 @@
   <ItemGroup>
     <ClCompile Include="..\include\params.cpp" />
     <ClCompile Include="..\src\functions.cpp" />
+    <ClCompile Include="..\src\Hamiltonian.cpp" />
     <ClCompile Include="..\src\tridiagonal.cpp" />
     <ClCompile Include="..\src\WaveFunction.cpp" />
     <ClCompile Include="Quantum_Mechanics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\functions.hpp" />
+    <ClInclude Include="..\include\Hamiltonian.hpp" />
     <ClInclude Include="..\include\tridiagonal.hpp" />
     <ClInclude Include="..\include\WaveFunction.hpp" />
   </ItemGroup>

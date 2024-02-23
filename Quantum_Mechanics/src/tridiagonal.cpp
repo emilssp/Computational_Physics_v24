@@ -3,7 +3,6 @@
 TridiagonalMatrix::TridiagonalMatrix()
 {
 	this->A = sp_mat();
-	cout << "Empty Matrix" << endl;
 }
 
 TridiagonalMatrix::TridiagonalMatrix(vec LD, vec MD, vec UD)
@@ -17,14 +16,14 @@ TridiagonalMatrix::TridiagonalMatrix(vec LD, vec MD, vec UD)
 	this->A = A;
 }
 
-void TridiagonalMatrix::solveEVP(EVPsol& sol)
+void TridiagonalMatrix::solveEVP(EVPsol& sol, int eig_number)
 {
 	cout << "Solving EVP..." << endl;
 
 	vec eigvals;
 	mat eigvecs;
 
-	eigs_sym(eigvals, eigvecs, this->A, this->k, "sm");
+	eigs_sym(eigvals, eigvecs, this->A, eig_number, "sm");
 	//eigvec *= -1;
 
 	cout << "Done with eigenvalues and eigenvectors." << endl;

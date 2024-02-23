@@ -6,13 +6,9 @@ using namespace arma;
 using namespace std;
 
 
-class TridiagonalMatrix {
+struct TridiagonalMatrix {
 	sp_mat A;
-
-	const int k = 200;
-
-public:
 	TridiagonalMatrix();
 	TridiagonalMatrix(vec LD, vec MD, vec UD);
-	void solveEVP(EVPsol& sol);
+	void solveEVP(EVPsol& sol, int eig_number);
 };
