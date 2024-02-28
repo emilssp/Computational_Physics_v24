@@ -2,7 +2,10 @@
 //
 
 #include <iostream>
+#include <iomanip>
 #include <thread>
+#include <fstream>
+
 
 #include <armadillo>
 
@@ -74,28 +77,50 @@ int main()
 
 */
 
+
 //##############################################################
 //####			Particle in box	with a Barrier				####
 //##############################################################
+	const double V0_ = 22;
+
+	ofstream outfile_clear(RAW_PATH + "/roots.txt", ios::trunc);
+	outfile_clear.close();
+
+	ofstream outfile(RAW_PATH + "/roots.txt", ios::app);
 	
-	double V0 = 500;
+	for (double V0 = V0_; V0 < V0_+3; V0++)
+	{
+		vec V = ones(SPACESTEPS) * V0;
 
-	vec V = ones(SPACESTEPS) * V0;
+		uvec indices = find(x < (L / 3) || x >(2 * L / 3));
+		V.elem(indices).zeros();
+		Hamiltonian H{ V };
+		//H.toFile(RAW_PATH, "barrier1000");
 
-	uvec indices = find(x < (L / 3) || x >(2 * L / 3));
-	V.elem(indices).zeros();
-	Hamiltonian H{ V };
-	H.toFile(RAW_PATH, "barrier500");
-
-	vec init = (H.getSol().eigenvecs.col(0) + H.getSol().eigenvecs.col(1))/sqrt(2);
-	double cutoffTime = 10 * pi / (H.getSol().eigenvals(1) - H.getSol().eigenvals(0));
-	cout << "Cutoff time t' = " << cutoffTime << "\n";
-	cout << "lambda_1 = " << H.getSol().eigenvals(0) << "\n";
-	cout << "lambda_2 = " << H.getSol().eigenvals(1) << endl;
+	//	vec init = (H.getSol().eigenvecs.col(0) + H.getSol().eigenvecs.col(1))/sqrt(2);
+	//	double cutoffTime = 10 * pi / (H.getSol().eigenvals(1) - H.getSol().eigenvals(0));
+	//	cout << "Cutoff time t' = " << cutoffTime << "\n";
+	//	cout << "lambda_1 = " << H.getSol().eigenvals(0) << "\n";
+	//	cout << "lambda_2 = " << H.getSol().eigenvals(1) << endl;
 
 
-	WaveFunction psi{ H.getSol(), init, cutoffTime };
-	psi.saveToFile(RAW_PATH, "barrier500_10T");
-	
+	//	WaveFunction psi{ H.getSol(), init, cutoffTime };
+	//	psi.saveToFile(RAW_PATH, "barrier1000_10T");
+
+		vec initial_guesses = H.getSol().eigenvals.elem(find(H.getSol().eigenvals <= V0));
+		vec roots = zeros(initial_guesses.n_elem);
+		for (int i = 0; i < initial_guesses.n_elem; i++) {
+			double guess = initial_guesses(i);
+			roots(i) = newtonRaphson(f, guess, V0);
+		}
+
+		outfile << fixed << setprecision(12);
+
+		outfile << "v0 = " << V0 << setw(13) << "Eigenvalue" << setw(20) << "Roots" << "\n";
+		for (arma::uword i = 0; i < roots.n_elem; ++i) {
+			outfile <<setw(18)<<"    " << setw(20) << initial_guesses(i) << setw(20) << roots(i) << "\n";
+		}
+
+	}
 	return 0;
 }

@@ -1,10 +1,7 @@
-﻿  params.cpp
-D:\Uni\Computational Physics\Computational_Physics_v24\Quantum_Mechanics\include\params.cpp(1,13): warning C4081: expected 'newline'; found ';'
-  Quantum_Mechanics.cpp
+﻿  Quantum_Mechanics.cpp
 D:\Uni\Computational Physics\Computational_Physics_v24\Quantum_Mechanics\include\params.cpp(1,13): warning C4081: expected 'newline'; found ';'
   (compiling source file 'Quantum_Mechanics.cpp')
   
-  Generating Code...
   Quantum_Mechanics.vcxproj -> D:\Uni\Computational Physics\Computational_Physics_v24\Quantum_Mechanics\x64\Debug\Quantum_Mechanics.exe
   'pwsh.exe' is not recognized as an internal or external command,
   operable program or batch file.

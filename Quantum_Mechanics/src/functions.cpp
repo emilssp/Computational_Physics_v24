@@ -61,3 +61,44 @@ vec potFromFile(string path, string name) {
 void potToFile(vec V, string path, string name) {
 	V.save(path + "/potential_" + name + ".csv", csv_ascii);
 }
+
+double f(double lambda, double V0)
+{
+	if (lambda >= V0) return INFINITY;
+
+	double k = sqrt(lambda);
+	double kappa = sqrt(V0 - lambda);
+	double term1 = (kappa * sin(k / 3) + k * cos(k / 3));
+	double term2 = (kappa * sin(k / 3) - k * cos(k / 3));
+
+	return exp(k / 3) * term1 * term1 - exp(-k / 3) * term2 * term2;
+}
+
+double derivative(function<double(double, double)> f, double x, double V0, const double h){
+	return f(x + h, V0) - f(x - h, V0) / (2 * h);
+}
+
+double newtonRaphson(function<double(double, double)> f, double initial_guess, double V0, double tolerance, int max_iterations)
+{
+	double x = initial_guess;
+	for (int i = 0; i < max_iterations; ++i) {
+		
+		double f_val = f(x, V0);
+		double df_val = derivative(f,x,V0);
+
+		if (abs(df_val) < tolerance) {
+			cerr << "Derivative too small." << endl;
+			return x;
+		}
+
+		double x_next = x - f_val / df_val;
+
+		if (abs(x_next - x) < tolerance) {
+			return x_next;
+		}
+
+		x = x_next;
+	}
+	cerr << "Max iterations reached without convergence." << endl;
+	return x;
+}
