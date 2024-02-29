@@ -10,7 +10,6 @@ Hamiltonian::Hamiltonian()
 	this->V = zeros(SPACESTEPS);
 	this->H = TridiagonalMatrix(LD, MD, UD);
 
-	solveEVP();
 }
 Hamiltonian::Hamiltonian(EVPsol sol)
 {
@@ -46,7 +45,7 @@ Hamiltonian::Hamiltonian(vec V_in)
 	this->H = TridiagonalMatrix(LD, MD, UD);
 	this->H.A = this->H.A + V;
 	this->V = V_in;
-	solveEVP();
+
 }
 
 Hamiltonian::Hamiltonian(vec V_in, EVPsol sol) 

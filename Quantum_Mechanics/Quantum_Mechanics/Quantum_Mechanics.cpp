@@ -10,10 +10,11 @@
 #include <armadillo>
 
 #include "functions.hpp"
-
 #include "tridiagonal.hpp"
+
 #include "Hamiltonian.hpp"
 #include "WaveFunction.hpp"
+#include "CrankNicolson.hpp"
 
 
 using namespace std;
@@ -28,7 +29,9 @@ int main()
 	arma_rng::set_seed_random();
 	vec x = linspace(0.0, L, SPACESTEPS);
 	vec x_ = x.subvec(1, x.n_rows - 2);
-	cout <<"dx = "<< dx << endl;
+	cout << "dx = " << dx << endl;
+	cout << "dt = " << dt << endl;
+
 
 
 /*
@@ -39,6 +42,7 @@ int main()
 //	Solve an eigenvalue problem. 
 
 	Hamiltonian H;
+	H.solveEVP()
 	H.toFile(RAW_PATH, "infwell");
 */
 
@@ -77,7 +81,7 @@ int main()
 
 */
 
-
+/*
 //##############################################################
 //####			Particle in box	with a Barrier				####
 //##############################################################
@@ -95,6 +99,7 @@ int main()
 		uvec indices = find(x < (L / 3) || x >(2 * L / 3));
 		V.elem(indices).zeros();
 		Hamiltonian H{ V };
+		H.solveEVP();
 		//H.toFile(RAW_PATH, "barrier1000");
 
 	//	vec init = (H.getSol().eigenvecs.col(0) + H.getSol().eigenvecs.col(1))/sqrt(2);
@@ -122,5 +127,12 @@ int main()
 		}
 
 	}
+	*/
+
+	const double V0 = 1000;
+	EVPsol sol = eigFromFile(RAW_PATH, "barrier1000");
+
+	fwEuler(ones<cx_vec>(10), sp_cx_mat().speye(10, 10), 1, 1, 5, 10);
+
 	return 0;
 }
