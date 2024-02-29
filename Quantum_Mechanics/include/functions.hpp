@@ -28,3 +28,5 @@ vec potFromFile(string path, string name);
 double newtonRaphson(function<double(double, double)> f, double initial_guess, double V0, double tolerance = 1e-10, int max_iterations = 5000);
 double derivative(function<double(double, double)> f, double x, double V0, const double h = 1e-12);
 double f(double lambda, double V0);
+
+cx_vec thomasAlgorithm(cx_mat A, cx_vec y);

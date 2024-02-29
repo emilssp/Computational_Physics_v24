@@ -74,6 +74,35 @@ double f(double lambda, double V0)
 	return exp(k / 3) * term1 * term1 - exp(-k / 3) * term2 * term2;
 }
 
+cx_vec thomasAlgorithm(cx_mat A, cx_vec y)
+{
+
+	int N = y.size();
+
+	cx_vec a = A.diag(-1);
+	cx_vec b = A.diag(0);
+	cx_vec c = A.diag(1);
+	
+	cx_vec c_star = zeros<cx_vec>(N);
+	cx_vec y_star = zeros<cx_vec>(N);
+	cx_vec x = zeros<cx_vec>(N);
+
+	c_star[0] = c[0] / b[0];
+	y_star[0] = y[0] / b[0];
+
+	for (int i = 1; i < N; i++) {
+		complex<double> m = 1.0 / (b[i] - a[i] * c_star[i - 1]);
+		c_star[i] = c[i] * m;
+		y_star[i] = (y[i] - a[i] * y_star[i - 1]) * m;
+	}
+
+	// This is the reverse sweep, used to update the solution vector f                                                                                                                                                 
+	for (int i = N - 2; i-- > 0; ) {
+		x[i] = y_star[i] - c_star[i] * y[i + 1];
+	}
+	return x;
+}
+
 double derivative(function<double(double, double)> f, double x, double V0, const double h){
 	return f(x + h, V0) - f(x - h, V0) / (2 * h);
 }

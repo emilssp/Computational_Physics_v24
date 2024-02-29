@@ -130,9 +130,14 @@ int main()
 	*/
 
 	const double V0 = 1000;
-	EVPsol sol = eigFromFile(RAW_PATH, "barrier1000");
+	vec V = ones(SPACESTEPS) * V0;
+	uvec indices = find(x < (L / 3) || x >(2 * L / 3));
+	V.elem(indices).zeros();
+	Hamiltonian H(V);
+	H.solveEVP();
 
-	fwEuler(ones<cx_vec>(10), sp_cx_mat().speye(10, 10), 1, 1, 5, 10);
-
+	cx_vec init = cx_vec(H.getSol().eigenvecs.col(0),zeros(H.getSol().eigenvecs.col(0).n_elem));
+	CrankNicolson wave(init, H, dt, dx, TIMESTEPS, SPACESTEPS);
+	wave.saveToFile(RAW_PATH, "test2");
 	return 0;
 }
