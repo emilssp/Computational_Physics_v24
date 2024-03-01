@@ -200,13 +200,18 @@ int main()
 /*
 
 */
-	int N = 11;
-	const double V0 = 1000;
+	int N = 101;
+	const double V0 = 100;
 	//double Vr = 0;
 	vec g;
 	vec e;
 	vec tau = zeros(N);
-	vec Vr_vec = linspace(-300, 300, N);
+	mat res = zeros<mat>(2, N);
+	mat potential = zeros<mat>(SPACESTEPS, N);
+	mat vec1 = zeros<mat>(SPACESTEPS + 2, N);
+	mat vec2 = zeros<mat>(SPACESTEPS + 2, N);
+
+	vec Vr_vec = linspace(-50, 50, N);
 	for (int i = 0; i < N; i++) {
 		cout << i + 1 << ". Vr = " << Vr_vec[i] << "\n";
 		vec V = ones(SPACESTEPS) * V0;
@@ -218,13 +223,19 @@ int main()
 		V.elem(indices_right) = V.elem(indices_right) * Vr_vec(i);
 		Hamiltonian H(V);
 		H.solveEVP(20);
-		g = H.getSol().eigenvecs.col(0);
-		e = H.getSol().eigenvecs.col(1);
-
+		g = H.getSol().eigenvecs.col(0).subvec(1, SPACESTEPS);
+		e = H.getSol().eigenvecs.col(1).subvec(1, SPACESTEPS);
+		res.col(i) = H.getSol().eigenvals.subvec(0, 1);
+		vec1.col(i) = H.getSol().eigenvecs.col(0);
+		vec2.col(i) = H.getSol().eigenvecs.col(1);
+		potential.col(i) = V;
 		tau(i) = H.tunnelingAmp(g,e);
 	}
 
 	tau.save(RAW_PATH + "/tau.csv", csv_ascii);
-	
+	res.save(RAW_PATH + "/Eigenvalues_different_Vr.csv", csv_ascii);
+	vec1.save(RAW_PATH + "/vec1_Vr.csv", csv_ascii);
+	vec2.save(RAW_PATH + "/vec2_Vr.csv", csv_ascii);
+	potential.save(RAW_PATH + "/potential_mat.csv", csv_ascii);
 	return 0;
 }
