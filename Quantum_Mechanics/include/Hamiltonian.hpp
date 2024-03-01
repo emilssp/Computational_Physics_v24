@@ -5,7 +5,6 @@ class Hamiltonian{
 	TridiagonalMatrix H;
 	EVPsol sol;
 
-	int k = 250;
 	vec V;
 public:
 
@@ -18,7 +17,7 @@ public:
 	Hamiltonian(vec V_x, EVPsol sol);
 
 	TridiagonalMatrix getH() { return this->H; }
-	void solveEVP();
+	void solveEVP(int k = 250);
 	EVPsol getSol();
 	void toFile(string path, string name);
 

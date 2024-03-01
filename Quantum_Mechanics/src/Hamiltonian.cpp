@@ -65,7 +65,7 @@ Hamiltonian::Hamiltonian(vec V_in, EVPsol sol)
 	this->sol = sol;
 }
 
-void Hamiltonian::solveEVP()
+void Hamiltonian::solveEVP(int k)
 {
 	this->H.solveEVP(this->sol, k);
 }

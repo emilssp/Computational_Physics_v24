@@ -129,7 +129,7 @@ int main()
 	}
 	*/
 
-	/*
+
 //##############################################################
 //####	Particle in box	with a Barrier, Crank-Nicolson		####
 //##############################################################
@@ -144,7 +144,7 @@ int main()
 	cx_vec init = cx_vec(H.getSol().eigenvecs.col(0),zeros(H.getSol().eigenvecs.col(0).n_elem));
 	CrankNicolson wave(init, H, dt, dx, TIMESTEPS, SPACESTEPS);
 	wave.saveToFile(RAW_PATH, "test2");
-
+/*
 	vec init1 = H.getSol().eigenvecs.col(0);
 	cx_vec cx_init1 = cx_vec(init1, zeros(init1.n_elem));
 	CrankNicolson wave_1 (cx_init1, H, dt, dx, TIMESTEPS, SPACESTEPS);
@@ -163,15 +163,33 @@ int main()
 	wave_delta.saveToFile(RAW_PATH, "psi_delta");
 	*/
 
-	const double V0 = 100;
-	const double Vr = 50;
-	vec V = ones(SPACESTEPS) * V0;
-	uvec indices_left = find(x_ < (L / 3));
-	V.elem(indices_left).zeros();
-	uvec indices_right = find(x_ > (2 * L / 3));
+	//const double V0 = 100;
 
-	V.elem(indices_right).ones();
-	V.elem(indices_right) = V.elem(indices_right) * Vr;
+	vec Vr_vec = linspace(-100, 100, 21);
+	mat res = zeros<mat>(2,21);
+	mat vec1 = zeros<mat>(SPACESTEPS + 2, 21);
+	mat vec2 = zeros<mat>(SPACESTEPS + 2, 21);
 
+	for (int i = 0; i < Vr_vec.n_elem; i++){
+		cout << i+1 <<". Vr = " << Vr_vec[i]<<"\n";
+		vec V = ones(SPACESTEPS) * V0;
+		uvec indices_left = find(x_ < (L / 3));
+		V.elem(indices_left).zeros();
+		uvec indices_right = find(x_ > (2 * L / 3));
+
+		V.elem(indices_right).ones();
+		V.elem(indices_right) = V.elem(indices_right) * Vr_vec(i);
+		Hamiltonian H(V);
+
+		H.solveEVP(15);
+		
+		res.col(i) = H.getSol().eigenvals.subvec(0,1);
+		vec1.col(i) = H.getSol().eigenvecs.col(0);
+		vec2.col(i) = H.getSol().eigenvecs.col(1);
+
+	}
+	res.save(RAW_PATH + "/Eigenvalues_different_Vr.csv", csv_ascii);
+	vec1.save(RAW_PATH + "/vec1_Vr.csv", csv_ascii);
+	vec2.save(RAW_PATH + "/vec2_Vr.csv", csv_ascii);
 	return 0;
 }

@@ -23,8 +23,7 @@ void TridiagonalMatrix::solveEVP(EVPsol& sol, int eig_number)
 	vec eigvals;
 	mat eigvecs;
 
-	eigs_sym(eigvals, eigvecs, this->A, eig_number, "sm");
-	//eigvec *= -1;
+	eigs_sym(eigvals, eigvecs, this->A, eig_number,"sm");
 
 	cout << "Done with eigenvalues and eigenvectors." << endl;
 	sol.eigenvals = eigvals;
