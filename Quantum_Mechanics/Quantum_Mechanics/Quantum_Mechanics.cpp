@@ -200,11 +200,13 @@ int main()
 /*
 
 */
-	int N = 21;
-	const double V0 = 100;
+	int N = 11;
+	const double V0 = 1000;
 	//double Vr = 0;
+	vec g;
+	vec e;
 	vec tau = zeros(N);
-	vec Vr_vec = linspace(-100, 100, N);
+	vec Vr_vec = linspace(-300, 300, N);
 	for (int i = 0; i < N; i++) {
 		cout << i + 1 << ". Vr = " << Vr_vec[i] << "\n";
 		vec V = ones(SPACESTEPS) * V0;
@@ -215,13 +217,14 @@ int main()
 		V.elem(indices_right).ones();
 		V.elem(indices_right) = V.elem(indices_right) * Vr_vec(i);
 		Hamiltonian H(V);
-		H.solveEVP(15);
-		vec g = H.getSol().eigenvecs.col(0);
-		vec e = H.getSol().eigenvecs.col(1);
-		tau(i) = tunnelingAmp(g,e,H);
+		H.solveEVP(20);
+		g = H.getSol().eigenvecs.col(0);
+		e = H.getSol().eigenvecs.col(1);
+
+		tau(i) = H.tunnelingAmp(g,e);
 	}
 
-	tau.save(RAW_PATH + "tau.csv", csv_ascii);
+	tau.save(RAW_PATH + "/tau.csv", csv_ascii);
 	
 	return 0;
 }

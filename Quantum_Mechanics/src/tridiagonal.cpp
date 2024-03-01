@@ -33,6 +33,16 @@ void TridiagonalMatrix::solveEVP(EVPsol& sol, int eig_number)
 
 }
 
+vec TridiagonalMatrix::operator*(const vec& x) const
+{
+	return this->A * x;
+}
+
+mat TridiagonalMatrix::operator*(const mat& X) const
+{
+	return this->A * X;
+}
+
 ComplexTridiagonalMatrix::ComplexTridiagonalMatrix()
 {
 	this->A = sp_cx_mat();

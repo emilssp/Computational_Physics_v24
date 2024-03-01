@@ -12,6 +12,10 @@ struct TridiagonalMatrix {
 	TridiagonalMatrix();
 	TridiagonalMatrix(vec LD, vec MD, vec UD);
 	void solveEVP(EVPsol& sol, int eig_number);
+	vec operator*(const vec& x) const;
+	
+	
+	mat operator*(const mat& X) const;
 };
 
 struct ComplexTridiagonalMatrix {

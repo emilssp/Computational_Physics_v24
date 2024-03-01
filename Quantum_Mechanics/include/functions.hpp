@@ -3,7 +3,7 @@
 #include <iostream>
 #include "params.cpp"
 #include <string>
-#include <Hamiltonian.hpp>
+
 
 using namespace std;
 using namespace arma;
