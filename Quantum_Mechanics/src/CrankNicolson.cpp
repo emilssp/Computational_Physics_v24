@@ -47,19 +47,16 @@ CrankNicolson::CrankNicolson(cx_vec init, Hamiltonian H_in, const double delta_t
 {
     ComplexTridiagonalMatrix H = H_in.getH();
     this->time = linspace(0, timesteps * delta_t, timesteps);
-
     this->res = cx_mat().zeros(spacesteps + 2, timesteps);
     this->res.col(0) = init;
-    
     int N = res.col(0).n_elem;
-
+   
     cx_mat A = eye<cx_mat>(spacesteps, spacesteps) + complex<double>(0, 0.5*dt) * H.A;
     cx_mat B = eye<cx_mat>(spacesteps, spacesteps) - complex<double>(0, 0.5*dt) * H.A;
     cx_vec fac;
-
-    cout << "Solving Schrodingers Equation..." << endl;
-
-    auto start = std::chrono::high_resolution_clock::now();
+    
+    cout << "Solving Schrodinger's Equation..." << endl;
+    auto start = chrono::high_resolution_clock::now();
 
     #pragma omp parallel for //parallelize the for loop 
     for (int i = 1; i < time.n_elem; i++)
@@ -68,9 +65,9 @@ CrankNicolson::CrankNicolson(cx_vec init, Hamiltonian H_in, const double delta_t
         res.col(i).subvec(1, N - 2) = thomasAlgorithm(A, fac);
         //res.col(i).subvec(1, N - 2) = solve(A, fac);
     }
-    auto finish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = finish - start;
-    std::cout << "Elapsed time: " << elapsed.count() << " s\n";
+    auto finish = chrono::high_resolution_clock::now();
+    chrono::duration<double> elapsed = finish - start;
+    cout << "Elapsed time: " << elapsed.count() << " s\n";
 
     cout << "Done with solving Schrodingers Equation.";
 }

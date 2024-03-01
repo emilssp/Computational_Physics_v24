@@ -41,7 +41,9 @@ Hamiltonian::Hamiltonian(vec V_in)
 	vec MD = zeros(SPACESTEPS) + (2.00 / (dx * dx));
 	vec LD = zeros(SPACESTEPS - 1) - (1.00 / (dx * dx));
 
+	//sp_mat V = sp_mat(diagmat(V_in.subvec(1,V_in.n_elem-2)));
 	sp_mat V = sp_mat(diagmat(V_in));
+
 	this->H = TridiagonalMatrix(LD, MD, UD);
 	this->H.A = this->H.A + V;
 	this->V = V_in;

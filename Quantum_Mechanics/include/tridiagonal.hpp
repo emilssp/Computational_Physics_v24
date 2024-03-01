@@ -19,5 +19,4 @@ struct ComplexTridiagonalMatrix {
 	ComplexTridiagonalMatrix();
 	ComplexTridiagonalMatrix(TridiagonalMatrix M);
 	ComplexTridiagonalMatrix(cx_vec LD, cx_vec MD, cx_vec UD);
-	void solveEVP(ComplexEVPsol& sol, int eig_number);
 };

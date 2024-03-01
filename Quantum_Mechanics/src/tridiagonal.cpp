@@ -55,23 +55,5 @@ ComplexTridiagonalMatrix::ComplexTridiagonalMatrix(cx_vec LD, cx_vec MD, cx_vec 
 	this->A = A;
 }
 
-void ComplexTridiagonalMatrix::solveEVP(ComplexEVPsol& sol, int eig_number)
-{
-	cout << "Solving EVP..." << endl;
-
-	cx_vec eigvals;
-	cx_mat eigvecs;
-
-	eigs_gen(eigvals, eigvecs, this->A, eig_number, "sm");
-	//eigvec *= -1;
-
-	cout << "Done with eigenvalues and eigenvectors." << endl;
-	sol.eigenvals = eigvals;
-	sol.eigenvecs = eigvecs;
-	sol.eigenvecs.insert_rows(0, 1); // Insert a row of zeros at the top
-	sol.eigenvecs.insert_rows(sol.eigenvecs.n_rows, 1);
-
-}
-
 
 

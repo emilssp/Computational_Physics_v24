@@ -13,15 +13,15 @@ struct EVPsol {
 	mat eigenvecs;
 };
 
-struct ComplexEVPsol {
+/*struct ComplexEVPsol {
 
 	cx_vec eigenvals;
 	cx_mat eigenvecs;
-};
+};*/
 
 
 void eigToFile(EVPsol sol, string path, string name);
-EVPsol eigFromFile(string path, string name);	//Loads the eigenvectors from the txt file
+EVPsol eigFromFile(string path, string name);	//Loads the eigenvectors from the file
 void potToFile(vec V, string path, string name);
 vec potFromFile(string path, string name);
 

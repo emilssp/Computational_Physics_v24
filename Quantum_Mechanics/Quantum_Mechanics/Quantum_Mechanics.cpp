@@ -27,7 +27,7 @@ int main()
 
 	cout<<"######################################## PROGRAM STARTS HERE ################################################"<<endl;
 	arma_rng::set_seed_random();
-	vec x = linspace(0.0, L, SPACESTEPS);
+	vec x = linspace(0.0, L, SPACESTEPS+2);
 	vec x_ = x.subvec(1, x.n_rows - 2);
 	cout << "dx = " << dx << endl;
 	cout << "dt = " << dt << endl;
@@ -129,9 +129,14 @@ int main()
 	}
 	*/
 
-	const double V0 = 1000;
+	/*
+//##############################################################
+//####	Particle in box	with a Barrier, Crank-Nicolson		####
+//##############################################################
+
+	const double V0 = 300;
 	vec V = ones(SPACESTEPS) * V0;
-	uvec indices = find(x < (L / 3) || x >(2 * L / 3));
+	uvec indices = find(x_ < (L / 3) || x_ >(2 * L / 3));
 	V.elem(indices).zeros();
 	Hamiltonian H(V);
 	H.solveEVP();
@@ -139,5 +144,34 @@ int main()
 	cx_vec init = cx_vec(H.getSol().eigenvecs.col(0),zeros(H.getSol().eigenvecs.col(0).n_elem));
 	CrankNicolson wave(init, H, dt, dx, TIMESTEPS, SPACESTEPS);
 	wave.saveToFile(RAW_PATH, "test2");
+
+	vec init1 = H.getSol().eigenvecs.col(0);
+	cx_vec cx_init1 = cx_vec(init1, zeros(init1.n_elem));
+	CrankNicolson wave_1 (cx_init1, H, dt, dx, TIMESTEPS, SPACESTEPS);
+	wave_1.saveToFile(RAW_PATH, "psi_1");
+
+	vec init2 = sqrt(0.5) * (H.getSol().eigenvecs.col(0) + H.getSol().eigenvecs.col(1));
+	cx_vec cx_init2 = cx_vec(init2, zeros(init2.n_elem));
+	CrankNicolson wave_12 (cx_init2, H, dt, dx, TIMESTEPS, SPACESTEPS);
+	wave_12.saveToFile(RAW_PATH, "psi_12");
+
+	vec init3 = zeros(x.n_rows);
+	init3.subvec(1, x.n_rows - 2) = arma::exp(-(x.subvec(1, x.n_rows - 2) - 0.2 * L) % (x.subvec(1, x.n_rows - 2) - 0.2 * L) / dx);
+	init3 = normalise(init3);
+	cx_vec cx_init3 = cx_vec(init3, zeros(init3.n_elem));
+	CrankNicolson wave_delta(cx_init3, H, dt, dx, TIMESTEPS, SPACESTEPS);
+	wave_delta.saveToFile(RAW_PATH, "psi_delta");
+	*/
+
+	const double V0 = 100;
+	const double Vr = 50;
+	vec V = ones(SPACESTEPS) * V0;
+	uvec indices_left = find(x_ < (L / 3));
+	V.elem(indices_left).zeros();
+	uvec indices_right = find(x_ > (2 * L / 3));
+
+	V.elem(indices_right).ones();
+	V.elem(indices_right) = V.elem(indices_right) * Vr;
+
 	return 0;
 }
