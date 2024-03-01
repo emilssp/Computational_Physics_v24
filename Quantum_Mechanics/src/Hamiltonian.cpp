@@ -87,3 +87,17 @@ ostream& operator<<(ostream& os, const Hamiltonian& H)
 	os << H.H.A;
 	return os;
 }
+
+vec Hamiltonian::operator*(const vec& x) const {
+	return this->H.A * x;
+}
+mat Hamiltonian::operator*(const mat& X) const {
+	return this->H.A * X;
+}
+
+
+double tunnelingAmp(vec g, vec e, Hamiltonian H)
+{
+	vec b = H.getH().A * e;
+	return cdot(g, e);
+}

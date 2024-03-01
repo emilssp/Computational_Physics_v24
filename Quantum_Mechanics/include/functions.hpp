@@ -3,6 +3,7 @@
 #include <iostream>
 #include "params.cpp"
 #include <string>
+#include <Hamiltonian.hpp>
 
 using namespace std;
 using namespace arma;
@@ -12,13 +13,6 @@ struct EVPsol {
 	vec eigenvals;
 	mat eigenvecs;
 };
-
-/*struct ComplexEVPsol {
-
-	cx_vec eigenvals;
-	cx_mat eigenvecs;
-};*/
-
 
 void eigToFile(EVPsol sol, string path, string name);
 EVPsol eigFromFile(string path, string name);	//Loads the eigenvectors from the file
@@ -30,3 +24,4 @@ double derivative(function<double(double, double)> f, double x, double V0, const
 double f(double lambda, double V0);
 
 cx_vec thomasAlgorithm(cx_mat A, cx_vec y);
+

@@ -1,6 +1,6 @@
 #pragma once
 #include "functions.hpp"
-#include <iostream>
+
 
 using namespace arma;
 using namespace std;

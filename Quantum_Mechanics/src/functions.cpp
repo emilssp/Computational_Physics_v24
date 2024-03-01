@@ -1,4 +1,3 @@
-#pragma once
 #include "functions.hpp"
 
 void eigToFile(EVPsol sol, string path, string name)
@@ -100,6 +99,7 @@ cx_vec thomasAlgorithm(cx_mat A, cx_vec d)
 	}
 	return d;
 }
+
 
 double derivative(function<double(double, double)> f, double x, double V0, const double h){
 	return f(x + h, V0) - f(x - h, V0) / (2 * h);

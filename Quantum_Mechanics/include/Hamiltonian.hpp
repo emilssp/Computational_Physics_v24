@@ -1,13 +1,12 @@
 #pragma once
-#include "tridiagonal.hpp"
+#include "Tridiagonal.hpp"
+#include "functions.hpp"
 
 class Hamiltonian{
 	TridiagonalMatrix H;
 	EVPsol sol;
-
 	vec V;
 public:
-
 	Hamiltonian();
 
 	Hamiltonian(EVPsol sol);
@@ -19,7 +18,14 @@ public:
 	TridiagonalMatrix getH() { return this->H; }
 	void solveEVP(int k = 250);
 	EVPsol getSol();
+	vec getV();
 	void toFile(string path, string name);
+	
+	
+	vec operator*(const vec& x) const;
+	mat operator*(const mat& X) const;
 
 	friend ostream& operator<< (ostream& os, const Hamiltonian& H);
 };
+
+double tunnelingAmp(vec g, vec e, Hamiltonian H);
