@@ -1,4 +1,4 @@
-#include "tridiagonal.hpp"
+#include "Tridiagonal.hpp"
 
 TridiagonalMatrix::TridiagonalMatrix()
 {

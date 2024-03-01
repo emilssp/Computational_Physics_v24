@@ -10,7 +10,8 @@
 #include <armadillo>
 
 #include "functions.hpp"
-#include "tridiagonal.hpp"
+#include "Tridiagonal.hpp"
+#include "TwoLevelHamiltonian.hpp"
 
 #include "Hamiltonian.hpp"
 #include "WaveFunction.hpp"
@@ -129,7 +130,7 @@ int main()
 	}
 	*/
 
-
+/*
 //##############################################################
 //####	Particle in box	with a Barrier, Crank-Nicolson		####
 //##############################################################
@@ -144,7 +145,7 @@ int main()
 	cx_vec init = cx_vec(H.getSol().eigenvecs.col(0),zeros(H.getSol().eigenvecs.col(0).n_elem));
 	CrankNicolson wave(init, H, dt, dx, TIMESTEPS, SPACESTEPS);
 	wave.saveToFile(RAW_PATH, "test2");
-/*
+
 	vec init1 = H.getSol().eigenvecs.col(0);
 	cx_vec cx_init1 = cx_vec(init1, zeros(init1.n_elem));
 	CrankNicolson wave_1 (cx_init1, H, dt, dx, TIMESTEPS, SPACESTEPS);
@@ -163,8 +164,12 @@ int main()
 	wave_delta.saveToFile(RAW_PATH, "psi_delta");
 	*/
 
-	//const double V0 = 100;
+/*
 
+//##############################################################
+//####		Test for different detuning potentials			####
+//##############################################################
+	const double V0 = 100;
 	vec Vr_vec = linspace(-100, 100, 21);
 	mat res = zeros<mat>(2,21);
 	mat vec1 = zeros<mat>(SPACESTEPS + 2, 21);
@@ -191,5 +196,32 @@ int main()
 	res.save(RAW_PATH + "/Eigenvalues_different_Vr.csv", csv_ascii);
 	vec1.save(RAW_PATH + "/vec1_Vr.csv", csv_ascii);
 	vec2.save(RAW_PATH + "/vec2_Vr.csv", csv_ascii);
+*/
+/*
+
+*/
+	int N = 21;
+	const double V0 = 100;
+	//double Vr = 0;
+	vec tau = zeros(N);
+	vec Vr_vec = linspace(-100, 100, N);
+	for (int i = 0; i < N; i++) {
+		cout << i + 1 << ". Vr = " << Vr_vec[i] << "\n";
+		vec V = ones(SPACESTEPS) * V0;
+		uvec indices_left = find(x_ < (L / 3));
+		V.elem(indices_left).zeros();
+		uvec indices_right = find(x_ > (2 * L / 3));
+
+		V.elem(indices_right).ones();
+		V.elem(indices_right) = V.elem(indices_right) * Vr_vec(i);
+		Hamiltonian H(V);
+		H.solveEVP(15);
+		vec g = H.getSol().eigenvecs.col(0);
+		vec e = H.getSol().eigenvecs.col(1);
+		tau(i) = tunnelingAmp(g,e,H);
+	}
+
+	tau.save(RAW_PATH + "tau.csv", csv_ascii);
+	
 	return 0;
 }
