@@ -80,14 +80,14 @@ cx_vec thomasAlgorithm(cx_mat A, cx_vec d)
 	https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
 	*/
 
-	int N = d.size();
+	uword N = d.size();
 
 	cx_vec a = A.diag(-1);
 	cx_vec b = A.diag(0);
 	cx_vec c = A.diag(1);
 	cx_double w = (0.0,0.0);
 
-	for (int i = 1; i < N; i++) {
+	for (uword i = 1; i < N; i++) {
 		w = a[i] / b[i - 1];
 		b[i] = b[i] - w * c[i - 1];
 		d[i] = d[i] - w * d[i - 1];
@@ -98,6 +98,19 @@ cx_vec thomasAlgorithm(cx_mat A, cx_vec d)
 		d[i] = (d[i] - c[i] * d[i + 1])/b[i];
 	}
 	return d;
+}
+
+double tau_func(vec g, vec e, sp_mat H)
+{
+	mat A(H);
+	double temp = 0.0;
+
+	for (int i = 0; i < A.n_rows; i++) {
+		for (int j = 0; j < A.n_cols; j++) {
+			temp += g(i) * H(i, j) * e(j)*dx;
+		}
+	}
+	return temp;
 }
 
 
@@ -128,4 +141,51 @@ double newtonRaphson(function<double(double, double)> f, double initial_guess, d
 	}
 	cerr << "Max iterations reached without convergence." << endl;
 	return x;
+}
+
+cx_vec H_psi(cx_vec psi, double e0, double tau, double w, double t) {
+	psi(1) *= complex<double>(0, 1) * exp(complex<double>(0, -e0 * t)) * tau * sin(w * t);
+	psi(0) *= complex<double>(0, 1) * exp(complex<double>(0, e0 * t)) * tau * sin(w * t);
+	return psi;
+}
+
+cx_vec extendedSimpsonsRule(vec init, double e0, double tau, double w, double start, double stop, int n) {
+
+	if (n % 2 != 0) {
+		std::cerr << "n must be even for Simpson's Rule." << std::endl;
+		return cx_vec();
+	}
+	cx_vec cx_init (init,zeros(2));
+
+	double h = (stop - start) / n;
+	cx_vec sum = H_psi(cx_init, e0, tau, w, 0);
+
+	// Sum for terms with coefficient 4
+	for (int i = 1; i < n; i += 2) {
+		sum += 4 * H_psi(cx_init, e0, tau, w, start + i * h);
+	}
+
+	// Sum for terms with coefficient 2
+	for (int i = 2; i < n - 1; i += 2) {
+		sum += 2 * H_psi(cx_init, e0, tau, w, start + i * h);
+	}
+
+	return (h / 3) * sum;
+}
+
+cx_vec solveF(vec init, double e0, double tau, double w, double start, double stop, int n)
+{
+	cx_vec intgrl = extendedSimpsonsRule(init, e0, tau, w, start, stop, n);
+	double h = (stop - start) / n;
+	
+
+	cx_mat H = zeros<cx_mat>(2, 2);
+	
+	H(1, 0) = complex<double>(0, 1)* exp(complex<double>(0, -e0 * n * h))* tau* sin(w * n * h);
+	H(1, 0) = complex<double>(0, 1) * exp(complex<double>(0, e0 * n * h)) * tau * sin(w * n * h);
+
+	cx_mat A = eye<cx_mat>(2, 2) - H;
+	cx_vec b = cx_vec(init, zeros(2)) - intgrl;
+	return solve(A,b);
+	//return cx_vec();
 }

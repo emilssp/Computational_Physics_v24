@@ -197,10 +197,9 @@ int main()
 	vec1.save(RAW_PATH + "/vec1_Vr.csv", csv_ascii);
 	vec2.save(RAW_PATH + "/vec2_Vr.csv", csv_ascii);
 */
-/*
 
-*/
-	int N = 101;
+/*
+	int N = 11;
 	const double V0 = 100;
 	//double Vr = 0;
 	vec g;
@@ -229,13 +228,23 @@ int main()
 		vec1.col(i) = H.getSol().eigenvecs.col(0);
 		vec2.col(i) = H.getSol().eigenvecs.col(1);
 		potential.col(i) = V;
-		tau(i) = H.tunnelingAmp(g,e);
+		tau(i) = tau_func(g, e, H.getH().A);
+		tau(i) = H.tunnelingAmp(g, e);
 	}
 
 	tau.save(RAW_PATH + "/tau.csv", csv_ascii);
-	res.save(RAW_PATH + "/Eigenvalues_different_Vr.csv", csv_ascii);
-	vec1.save(RAW_PATH + "/vec1_Vr.csv", csv_ascii);
-	vec2.save(RAW_PATH + "/vec2_Vr.csv", csv_ascii);
-	potential.save(RAW_PATH + "/potential_mat.csv", csv_ascii);
+	res.save(RAW_PATH + "/Eigenvalues_different_Vr1.csv", csv_ascii);
+	vec1.save(RAW_PATH + "/vec1_Vr1.csv", csv_ascii);
+	vec2.save(RAW_PATH + "/vec2_Vr1.csv", csv_ascii);
+	potential.save(RAW_PATH + "/potential_mat1.csv", csv_ascii);
+	*/
+
+	const double V0 = 100;
+	int n = 100;
+	vec init = ones<vec>(2);
+	
+
+	cout << extendedSimpsonsRule(init,1,1,1,0,END_TIME,10) << endl;
+
 	return 0;
 }

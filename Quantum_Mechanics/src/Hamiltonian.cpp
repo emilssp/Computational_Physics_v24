@@ -98,5 +98,5 @@ mat Hamiltonian::operator*(const mat& X) const {
 
 double Hamiltonian::tunnelingAmp(vec g, vec e)
 {
-	return cdot(g, H * e);
+	return cdot(g, this->H * e);
 }
