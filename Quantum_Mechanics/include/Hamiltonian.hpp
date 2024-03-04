@@ -18,9 +18,9 @@ public:
 	TridiagonalMatrix getH() { return this->H; }
 	void solveEVP(int k = 250);
 	EVPsol getSol();
-	vec getV();
+	vec getV() { return this->V; };
 	void toFile(string path, string name);
-	
+	double tunnelingAmp(vec g, vec e);
 	
 	vec operator*(const vec& x) const;
 	mat operator*(const mat& X) const;
@@ -28,4 +28,3 @@ public:
 	friend ostream& operator<< (ostream& os, const Hamiltonian& H);
 };
 
-double tunnelingAmp(vec g, vec e, Hamiltonian H);
