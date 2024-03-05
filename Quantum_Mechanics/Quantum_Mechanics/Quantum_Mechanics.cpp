@@ -240,11 +240,34 @@ int main()
 	*/
 
 	const double V0 = 100;
-	int n = 100;
-	vec init = ones<vec>(2);
-	
+	int n = 1000;
+	vec V = ones(SPACESTEPS) * V0;
+	uvec indices_left = find(x_ < (L / 3));
+	V.elem(indices_left).zeros();
+	uvec indices_right = find(x_ > (2 * L / 3));
+	V.elem(indices_right).zeros();
 
-	cout << extendedSimpsonsRule(init,1,1,1,0,END_TIME,10) << endl;
+	Hamiltonian H(V);
+	H.solveEVP(20);
+
+	vec init = ones(2);
+	init(1) = 0;
+
+	double e0 = H.getSol().eigenvals(1)- H.getSol().eigenvals(0);
+	double tau = 0.02*e0;
+	double w = e0;
+	double h = END_TIME*30 / n;
+
+
+	cx_mat res = zeros<cx_mat>(2, n);
+	res.col(0) = cx_vec(init, zeros(2));
+	for (int i = 1; i<n-1; i++)
+	{
+		res.col(i) = solveF(res.col(i - 1), e0, tau, w, 0, i * h, n);
+	}
+	res.save(RAW_PATH+"/testfile.csv", csv_ascii);
+
+	//cout << extendedSimpsonsRule(init,1,1,1,0,END_TIME,10) << endl;
 
 	return 0;
 }

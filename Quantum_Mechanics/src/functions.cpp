@@ -149,13 +149,12 @@ cx_vec H_psi(cx_vec psi, double e0, double tau, double w, double t) {
 	return psi;
 }
 
-cx_vec extendedSimpsonsRule(vec init, double e0, double tau, double w, double start, double stop, int n) {
+cx_vec extendedSimpsonsRule(cx_vec cx_init, double e0, double tau, double w, double start, double stop, int n) {
 
 	if (n % 2 != 0) {
 		std::cerr << "n must be even for Simpson's Rule." << std::endl;
 		return cx_vec();
 	}
-	cx_vec cx_init (init,zeros(2));
 
 	double h = (stop - start) / n;
 	cx_vec sum = H_psi(cx_init, e0, tau, w, 0);
@@ -173,7 +172,7 @@ cx_vec extendedSimpsonsRule(vec init, double e0, double tau, double w, double st
 	return (h / 3) * sum;
 }
 
-cx_vec solveF(vec init, double e0, double tau, double w, double start, double stop, int n)
+cx_vec solveF(cx_vec init, double e0, double tau, double w, double start, double stop, int n)
 {
 	cx_vec intgrl = extendedSimpsonsRule(init, e0, tau, w, start, stop, n);
 	double h = (stop - start) / n;
@@ -185,7 +184,7 @@ cx_vec solveF(vec init, double e0, double tau, double w, double start, double st
 	H(1, 0) = complex<double>(0, 1) * exp(complex<double>(0, e0 * n * h)) * tau * sin(w * n * h);
 
 	cx_mat A = eye<cx_mat>(2, 2) - H;
-	cx_vec b = cx_vec(init, zeros(2)) - intgrl;
+	cx_vec b = init + intgrl;
 	return solve(A,b);
-	//return cx_vec();
+
 }
