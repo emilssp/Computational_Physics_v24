@@ -144,8 +144,8 @@ double newtonRaphson(function<double(double, double)> f, double initial_guess, d
 }
 
 cx_vec H_psi(cx_vec psi, double e0, double tau, double w, double t) {
-	psi(1) *= complex<double>(0, 1) * arma::exp(complex<double>(0, -e0 * t)) * tau * sin(w * t);
-	psi(0) *= complex<double>(0, 1) * arma::exp(complex<double>(0, e0 * t)) * tau * sin(w * t);
+	psi(1) *= complex<double>(0, 1) * exp(complex<double>(0, -e0 * t)) * tau * sin(w * t);
+	psi(0) *= complex<double>(0, 1) * exp(complex<double>(0, e0 * t)) * tau * sin(w * t);
 	return psi;
 }
 

@@ -279,7 +279,7 @@ int main()
 	*/
 	
 	const double V0 = 500;
-	int n = 1000;
+	int n = 5000;
 	vec V = ones(SPACESTEPS) * V0;
 	uvec indices_left = find(x_ < (L / 3));
 	V.elem(indices_left).zeros();
@@ -294,8 +294,8 @@ int main()
 	vec g0 = H.getSol().eigenvecs.col(0);
 	double e0 = H.getSol().eigenvals(1)- H.getSol().eigenvals(0);
 	double tau = 0.02 * e0;
-	double w = e0;
-	double h = END_TIME*30 / n;
+	double w = e0*5;
+	double h = END_TIME*1000 / n;
 
 	cx_mat res = zeros<cx_mat>(2, n);
 	res.col(0) = cx_init;
