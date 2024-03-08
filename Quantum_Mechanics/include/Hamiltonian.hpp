@@ -20,11 +20,11 @@ public:
 	EVPsol getSol();
 	vec getV() { return this->V; };
 	void toFile(string path, string name);
+	//double tunnelingAmp();
 	double tunnelingAmp(vec g, vec e);
-	
+
 	vec operator*(const vec& x) const;
 	mat operator*(const mat& X) const;
 
 	friend ostream& operator<< (ostream& os, const Hamiltonian& H);
 };
-

@@ -29,4 +29,3 @@ cx_vec extendedSimpsonsRule(cx_vec cx_init, double e0, double tau, double w, dou
 cx_vec solveF(cx_vec init, double e0, double tau, double w, double start, double stop, int n);
 cx_vec thomasAlgorithm(cx_mat A, cx_vec y);
 
-double tau_func(vec g, vec e, sp_mat H);

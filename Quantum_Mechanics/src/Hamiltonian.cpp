@@ -63,6 +63,7 @@ Hamiltonian::Hamiltonian(vec V_in, EVPsol sol)
 	this->H.A = this->H.A + V;
 
 	this->sol = sol;
+
 }
 
 void Hamiltonian::solveEVP(int k)
@@ -96,7 +97,29 @@ mat Hamiltonian::operator*(const mat& X) const {
 }
 
 
+/*double Hamiltonian::tunnelingAmp()
+{
+	vec g = this->sol.eigenvecs.col(1);
+
+	vec e = this->sol.eigenvecs.col(1);
+
+	double lambda = this->sol.eigenvals(1);
+
+	double res = g.at(0) * lambda * e.at(0) + g.at(g.n_elem - 1) * lambda * e.at(e.n_elem-1);
+	// Sum for terms with coefficient 4
+	for (int i = 1; i < SPACESTEPS; i += 2) {
+		res = 4.00 * g.at(i) * lambda * e.at(i);
+	}
+
+	// Sum for terms with coefficient 2
+	for (int i = 2; i < SPACESTEPS - 1; i += 2) {
+	 	res = 2.00 * g.at(i) * lambda * e.at(i);
+	}
+
+	return (dx / 3) * res;
+}*/
+
 double Hamiltonian::tunnelingAmp(vec g, vec e)
 {
-	return cdot(g, this->H * e);
+	return cdot(g,this->H.A*e);
 }

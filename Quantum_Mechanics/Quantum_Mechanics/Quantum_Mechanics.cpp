@@ -239,7 +239,46 @@ int main()
 	potential.save(RAW_PATH + "/potential_mat1.csv", csv_ascii);
 	*/
 
-	const double V0 = 100;
+	
+/*
+	const double V0 = 1000;
+	int n = 1000;
+	vec V = ones(SPACESTEPS) * V0;
+	vec Vr = linspace(-500, 500, 50);
+	uvec indices_left = find(x_ < (L / 3));
+	V.elem(indices_left).zeros();
+	uvec indices_right = find(x_ > (2 * L / 3));
+	vec tAmp = zeros(Vr.n_elem+1);
+	int i = 0;
+	//vec lambdas = zeros(50);
+	V.elem(indices_right).zeros();
+	//V.elem(indices_right) = V.elem(indices_right) * 0;
+
+	Hamiltonian H(V);
+	H.solveEVP(20);
+	/*
+	vec g0 = H.getSol().eigenvecs.col(0).subvec(1, H.getH().A.n_rows);
+
+	vec e0 = H.getSol().eigenvecs.col(1).subvec(1, H.getH().A.n_rows);
+	
+	for (auto v : Vr) {
+
+		V.elem(indices_right).ones();
+
+		V.elem(indices_right) = V.elem(indices_right) * v;
+		cout << "CHECK" << endl;
+		Hamiltonian H(V);
+		cout << "CHECK2" << endl;
+		//H.solveEVP(20);
+		//lambdas[i] = H.getSol().eigenvals(1);
+		tAmp[i] = H.tunnelingAmp(g0,e0);
+		cout << "CHECK3" << endl;
+		i++;
+	}
+	tAmp.save(RAW_PATH + "/tau3.csv", csv_ascii);
+	*/
+	
+	const double V0 = 500;
 	int n = 1000;
 	vec V = ones(SPACESTEPS) * V0;
 	uvec indices_left = find(x_ < (L / 3));
@@ -249,25 +288,31 @@ int main()
 
 	Hamiltonian H(V);
 	H.solveEVP(20);
-
 	vec init = ones(2);
 	init(1) = 0;
-
+	cx_vec cx_init = cx_vec(init, zeros(2));
+	vec g0 = H.getSol().eigenvecs.col(0);
 	double e0 = H.getSol().eigenvals(1)- H.getSol().eigenvals(0);
-	double tau = 0.02*e0;
+	double tau = 0.02 * e0;
 	double w = e0;
 	double h = END_TIME*30 / n;
 
-
 	cx_mat res = zeros<cx_mat>(2, n);
-	res.col(0) = cx_vec(init, zeros(2));
-	for (int i = 1; i<n-1; i++)
+	res.col(0) = cx_init;
+	for (int i = 1; i<n; i++)
 	{
 		res.col(i) = solveF(res.col(i - 1), e0, tau, w, 0, i * h, n);
 	}
+	cout << n * h << endl;
+	vec p_t = zeros(n);
+	for (int i = 0; i < n; i++) {
+		cx_vec psi_t = res.col(i);
+		p_t(i) = pow(abs(cdot(cx_init, psi_t)),2);
+	}
+
 	res.save(RAW_PATH+"/testfile.csv", csv_ascii);
-
+	p_t.save(RAW_PATH + "/pt.csv", csv_ascii);
 	//cout << extendedSimpsonsRule(init,1,1,1,0,END_TIME,10) << endl;
-
+	
 	return 0;
 }

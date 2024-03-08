@@ -100,7 +100,7 @@ cx_vec thomasAlgorithm(cx_mat A, cx_vec d)
 	return d;
 }
 
-double tau_func(vec g, vec e, sp_mat H)
+/*double tau_func(vec g, vec e, sp_mat H)
 {
 	mat A(H);
 	double temp = 0.0;
@@ -111,7 +111,7 @@ double tau_func(vec g, vec e, sp_mat H)
 		}
 	}
 	return temp;
-}
+}*/
 
 
 double derivative(function<double(double, double)> f, double x, double V0, const double h){
@@ -144,8 +144,8 @@ double newtonRaphson(function<double(double, double)> f, double initial_guess, d
 }
 
 cx_vec H_psi(cx_vec psi, double e0, double tau, double w, double t) {
-	psi(1) *= complex<double>(0, 1) * exp(complex<double>(0, -e0 * t)) * tau * sin(w * t);
-	psi(0) *= complex<double>(0, 1) * exp(complex<double>(0, e0 * t)) * tau * sin(w * t);
+	psi(1) *= complex<double>(0, 1) * arma::exp(complex<double>(0, -e0 * t)) * tau * sin(w * t);
+	psi(0) *= complex<double>(0, 1) * arma::exp(complex<double>(0, e0 * t)) * tau * sin(w * t);
 	return psi;
 }
 
@@ -172,6 +172,8 @@ cx_vec extendedSimpsonsRule(cx_vec cx_init, double e0, double tau, double w, dou
 	return (h / 3) * sum;
 }
 
+
+
 cx_vec solveF(cx_vec init, double e0, double tau, double w, double start, double stop, int n)
 {
 	cx_vec intgrl = extendedSimpsonsRule(init, e0, tau, w, start, stop, n);
@@ -185,6 +187,7 @@ cx_vec solveF(cx_vec init, double e0, double tau, double w, double start, double
 
 	cx_mat A = eye<cx_mat>(2, 2) - H;
 	cx_vec b = init + intgrl;
-	return solve(A,b);
+
+	return normalise(solve(A,b));
 
 }
