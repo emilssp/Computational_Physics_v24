@@ -23,9 +23,14 @@ vec potFromFile(string path, string name);
 cx_vec H_psi(cx_vec psi, double e0, double tau, double w, double t);
 double f(double lambda, double V0);
 
+uvec nonzeroColsMatrix(cx_mat A);
+
 double newtonRaphson(function<double(double, double)> f, double initial_guess, double V0, double tolerance = 1e-10, int max_iterations = 5000);
 double derivative(function<double(double, double)> f, double x, double V0, const double h = 1e-12);
-cx_vec extendedSimpsonsRule(cx_vec cx_init, double e0, double tau, double w, double start, double stop, int n);
-cx_vec solveF(cx_vec init, double e0, double tau, double w, double start, double stop, int n);
+cx_vec trapz(cx_mat cx_init, double eps0, double tau, double w, double h);
+
+cx_vec solveF(cx_mat init, double eps0, double tau, double w, double h);
 cx_vec thomasAlgorithm(cx_mat A, cx_vec y);
 
+double sine(double t); 
+double SR(double start, double stop, int n);

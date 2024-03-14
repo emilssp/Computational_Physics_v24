@@ -63,10 +63,8 @@ CrankNicolson::CrankNicolson(cx_vec init, Hamiltonian H_in, const double delta_t
     #pragma omp parallel for //parallelize the for loop 
     for (int i = 1; i < time.n_elem; i++)
     {
-        
         fac = B * res.col(i-1).subvec(1, N - 2);
         res.col(i).subvec(1, N - 2) = thomasAlgorithm(A, fac);
-        //res.col(i).subvec(1, N - 2) = solve(A, fac);
     }
     auto finish = chrono::high_resolution_clock::now();
     chrono::duration<double> elapsed = finish - start;

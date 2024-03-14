@@ -135,7 +135,6 @@
     <ClCompile Include="..\src\functions.cpp" />
     <ClCompile Include="..\src\Hamiltonian.cpp" />
     <ClCompile Include="..\src\Tridiagonal.cpp" />
-    <ClCompile Include="..\src\TwoLevelHamiltonian.cpp" />
     <ClCompile Include="..\src\WaveFunction.cpp" />
     <ClCompile Include="Quantum_Mechanics.cpp" />
   </ItemGroup>
@@ -144,7 +143,6 @@
     <ClInclude Include="..\include\functions.hpp" />
     <ClInclude Include="..\include\Hamiltonian.hpp" />
     <ClInclude Include="..\include\Tridiagonal.hpp" />
-    <ClInclude Include="..\include\TwoLevelHamiltonian.hpp" />
     <ClInclude Include="..\include\WaveFunction.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

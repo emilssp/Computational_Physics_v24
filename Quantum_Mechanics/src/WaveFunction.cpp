@@ -5,7 +5,7 @@
 void WaveFunction::exponent(vec time, vec eigenvals)
 {
 	cout << "Calculating exponentials... \n";
-	for (uword i = 0; i < eigenvals.n_rows; i++) {
+	for (uword i = 0; i < eigenvals.n_rows-50; i++) {
 		for (uword t_idx = 0; t_idx < time.n_rows; t_idx++) {
 			std::complex<double> exponent(0.0, -eigenvals(i) * time(t_idx));
 			this->exponential(t_idx, i) = std::exp(exponent);
@@ -17,7 +17,7 @@ void WaveFunction::exponent(vec time, vec eigenvals)
 void WaveFunction::alphas(mat eigenvecs, vec init)
 {
 	cout << "Calculating coefficients... \n";
-	for (uword i = 0; i < eigenvecs.n_cols; i++) {
+	for (uword i = 0; i < eigenvecs.n_cols-50; i++) {
 		this->alpha_n.row(i) = cdot(eigenvecs.col(i), init);
 	}
 	cout << "Calculating coefficients finished." << endl;
@@ -41,7 +41,7 @@ WaveFunction::WaveFunction(string path, string name, vec init, double time) {
 	for (uword t_idx = 0; t_idx < TIMESTEPS; t_idx++) {
 		cx_rowvec exp_vector = this->exponential.row(t_idx);
 		for (uword n = 0; n < N; n++) {
-			wave.col(t_idx) += alpha_n(n) * exp_vector(n) * sol.eigenvecs.col(n);
+			wave.col(t_idx) += normalise(alpha_n(n) * exp_vector(n) * sol.eigenvecs.col(n));
 		}
 	}
 

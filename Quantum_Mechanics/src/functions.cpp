@@ -73,6 +73,18 @@ double f(double lambda, double V0)
 	return exp(k / 3) * term1 * term1 - exp(-k / 3) * term2 * term2;
 }
 
+uvec nonzeroColsMatrix(cx_mat A)
+{
+	uvec nonzero;
+	for (size_t i = 0; i < A.n_cols; ++i) {
+		if (arma::accu(A.col(i) != 0) > 0) {
+			nonzero.insert_rows(nonzero.n_elem, 1);
+			nonzero(nonzero.n_elem - 1) = i;
+		}
+	}
+	return nonzero;
+}
+
 cx_vec thomasAlgorithm(cx_mat A, cx_vec d)
 {
 	/*
@@ -99,20 +111,6 @@ cx_vec thomasAlgorithm(cx_mat A, cx_vec d)
 	}
 	return d;
 }
-
-/*double tau_func(vec g, vec e, sp_mat H)
-{
-	mat A(H);
-	double temp = 0.0;
-
-	for (int i = 0; i < A.n_rows; i++) {
-		for (int j = 0; j < A.n_cols; j++) {
-			temp += g(i) * H(i, j) * e(j)*dx;
-		}
-	}
-	return temp;
-}*/
-
 
 double derivative(function<double(double, double)> f, double x, double V0, const double h){
 	return f(x + h, V0) - f(x - h, V0) / (2 * h);
@@ -143,51 +141,39 @@ double newtonRaphson(function<double(double, double)> f, double initial_guess, d
 	return x;
 }
 
-cx_vec H_psi(cx_vec psi, double e0, double tau, double w, double t) {
-	psi(1) *= complex<double>(0, 1) * exp(complex<double>(0, -e0 * t)) * tau * sin(w * t);
-	psi(0) *= complex<double>(0, 1) * exp(complex<double>(0, e0 * t)) * tau * sin(w * t);
+cx_vec H_psi(cx_vec psi, double eps0, double tau, double w, double t) {
+	psi(0) = complex<double>(0, 1) * exp(complex<double>(0, -eps0 * t )) * tau * sin(w * t ) * psi(1);
+	psi(1) = complex<double>(0, 1) * exp(complex<double>(0,  eps0 * t )) * tau * sin(w * t ) * psi(0);
 	return psi;
 }
 
-cx_vec extendedSimpsonsRule(cx_vec cx_init, double e0, double tau, double w, double start, double stop, int n) {
-
-	if (n % 2 != 0) {
-		std::cerr << "n must be even for Simpson's Rule." << std::endl;
-		return cx_vec();
+cx_vec trapz(cx_mat cx_init, double eps0, double tau, double w, double h)
+{
+	cx_vec temp = zeros<cx_vec>(2);
+	cx_vec sum = zeros<cx_vec>(2);
+	sum += H_psi(cx_init.col(0), eps0, tau, w, 0);
+	for (int i = 1; i < cx_init.n_cols - 1; i++) {
+		temp = cx_init.col(i);
+		sum += 2 * H_psi(temp, eps0, tau, w, i * h);
 	}
 
-	double h = (stop - start) / n;
-	cx_vec sum = H_psi(cx_init, e0, tau, w, 0);
-
-	// Sum for terms with coefficient 4
-	for (int i = 1; i < n; i += 2) {
-		sum += 4 * H_psi(cx_init, e0, tau, w, start + i * h);
-	}
-
-	// Sum for terms with coefficient 2
-	for (int i = 2; i < n - 1; i += 2) {
-		sum += 2 * H_psi(cx_init, e0, tau, w, start + i * h);
-	}
-
-	return (h / 3) * sum;
+	return (h / 2) * sum;
 }
 
-
-
-cx_vec solveF(cx_vec init, double e0, double tau, double w, double start, double stop, int n)
-{
-	cx_vec intgrl = extendedSimpsonsRule(init, e0, tau, w, start, stop, n);
-	double h = (stop - start) / n;
-	
-
+cx_vec solveF(cx_mat init, double eps0, double tau, double w, double h)
+{	
+	cx_vec intgrl = zeros<cx_vec>(2);
+	intgrl = trapz(init, eps0, tau, w, h);
+	int n = init.n_cols;
 	cx_mat H = zeros<cx_mat>(2, 2);
-	
-	H(1, 0) = complex<double>(0, 1)* exp(complex<double>(0, -e0 * n * h))* tau* sin(w * n * h);
-	H(1, 0) = complex<double>(0, 1) * exp(complex<double>(0, e0 * n * h)) * tau * sin(w * n * h);
 
-	cx_mat A = eye<cx_mat>(2, 2) - H;
-	cx_vec b = init + intgrl;
+	H(0, 1) = exp(complex<double>(0, -eps0 * n * h )) * tau * sin(w * n * h);
+	H(1, 0) = exp(complex<double>(0, eps0 * n * h )) * tau * sin(w * n  * h);
 
-	return normalise(solve(A,b));
+	cx_mat A = (eye<cx_mat>(2, 2) + complex<double>(0,h/2) * H);
+	cx_vec b = init.col(0) -  intgrl;
+	cx_vec sol = zeros<cx_vec>(2);
+	sol = solve(A, b);
 
+	return sol;
 }
