@@ -4,301 +4,327 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ 0dda387d-1e6c-4d8a-aa36-fd6c8e81b10a
-begin 
+# ╔═╡ b8433cf2-d049-48e3-82fd-fccc911217d1
+begin
 	using Random
 	using Distributions
 	using Plots
 	using LinearAlgebra
-	Random.seed!(123)
 end
 
-# ╔═╡ 1f10b2d2-0031-407a-a1ca-77e894d4fe05
-module Monomers
+# ╔═╡ fc9d20fc-1581-45e3-8461-961538c7a3c7
+begin 
+	seed = 1234
+	Random.seed!(1234)
+end
 
-	using Random
-	using Distributions
-	using Plots
-	using LinearAlgebra
-	Random.seed!(123)
-
+# ╔═╡ a4c4a926-3824-405f-a490-5470198e3bfc
+begin
+	
 	#define aminoacids according to the standard one letter abbreviation and assign 
 	#them to a number
 	@enum Aminoacid begin
-	    A = 1
-	    R = 2
-	    N = 3
-	    D = 4
-	    C = 5
-	    E = 6
-	    Q = 7
-	    G = 8
-	    H = 9
-	    I = 10
-	    L = 11
-	    K = 12
-	    M = 13
-	    F = 14
-	    P = 15
-	    S = 16
-	    T = 17
-	    W = 18
-	    Y = 19
-	    V = 20
+		A = 1
+		R = 2
+		N = 3
+		D = 4
+		C = 5
+		E = 6
+		Q = 7
+		G = 8
+		H = 9
+		I = 10
+		L = 11
+		K = 12
+		M = 13
+		F = 14
+		P = 15
+		S = 16
+		T = 17
+		W = 18
+		Y = 19
+		V = 20
 	end	
-
+	
 	interaction_mat = rand(Uniform(-4.00, -2.00), 20, 20);
-	mutable struct Monomer
-		id::Int64
-		kind::Aminoacid #type of the monomer
-		nearest_neighbors::Vector{Monomer}
-		pos::Vector{Float64}
-		function Monomer(id::Int64, kind::Aminoacid ,pos::Vector{Float64})
-			new(id, kind,Vector{Monomer}(),pos)
-		end
-	end
-	function addNeighbors!(monomer::Monomer, monomers::Vector{Monomer})
-		other_monomers = filter(m -> m !== monomer, monomers)
-		for other ∈ other_monomers
-			if (norm(monomer.pos-other.pos) - 1.0)<1e-9
-				push!(monomer.nearest_neighbors, other)
-			end
-		end
-	end
-
+	interaction_mat = tril(interaction_mat)
+	interaction_mat += interaction_mat' - Diagonal(diag(interaction_mat))
+	heatmap(interaction_mat, colormap=:jet)
+	
 end
 
-# ╔═╡ 1819bd63-1f7f-4580-9264-6ac9362f3fb5
-module Polymers
-
-	import ..Monomers
-	using LinearAlgebra
-
-	function anglePolymer(ϕ ,N::Int64)::Vector{Monomers.Monomer}
-		ϕ = deg2rad(ϕ)
-		aminos = [Monomers.Aminoacid(rand(1:20)) for _ ∈ 1:N]
-		monomers = [Monomers.Monomer(1, aminos[1],[2.0,2.0])]
-
-		cumulative_angle = rand([-1,1]) * ϕ
-		i = 2
-		while i<=N 
-			angle = rand([-1,1]) * ϕ
-			new_pos = monomers[i-1].pos+[cos(cumulative_angle),sin(cumulative_angle)]
-			if all(norm(new_pos - m.pos)>1e-9 for m ∈ monomers)
-					push!(monomers, Monomers.Monomer(i, aminos[i],new_pos))
-					i+=1
-		    end
-			cumulative_angle += angle
-
-		end
-		return monomers
-
+# ╔═╡ 36716b00-e7ba-11ee-119e-0ffc0a40ee38
+mutable struct Monomer
+	id::Int64
+	kind::Aminoacid #type of the monomer
+	nearest_neighbors::Vector{Monomer}
+	pos::Vector{Int64}
+	available_moves::Vector{Vector{Int64}}
+	function Monomer(id::Int64, kind::Aminoacid ,pos::Vector{Int64})
+		new(id, kind, Vector{Monomer}(), pos)
 	end
-	
-	function straightPolymer(N::Int64)::Vector{Monomers.Monomer}
+end
+
+# ╔═╡ af29e518-a5db-4dcd-b860-1c329db426a2
+function isdistance1(pos1, pos2)
+    return norm(pos1 - pos2) <= 1
+end
+
+# ╔═╡ 50892ac0-c8d8-4f51-bf60-a7fc7e2b7be6
+	function randPolymer(init::Vector{Int64}, N::Int64)::Vector{Monomer}
 		
-		aminos = [Monomers.Aminoacid(rand(1:20)) for _ ∈ 1:N]
-		monomers = [Monomers.Monomer(1, aminos[1],[2.0,2.0])]
-	
+		aminos = [Aminoacid(rand(1:20)) for _ ∈ 1:N]
+		monomers = [Monomer(1, aminos[1], init)]
+		
 		for i in 2:N
-			new_pos = monomers[i-1].pos + [1.0,0.0]
-			push!(monomers,Monomers.Monomer(i, aminos[i],new_pos))
-		end
-		return monomers
-	end
-
-	mutable struct Polymer
-		N::Int64 #number of monomers in the structure
-		monomers::Vector{Monomers.Monomer} #constituents of the polymer
-		energy::Float64
-		function Polymer(monomers::Vector{Monomers.Monomer})
-			N = length(monomers)
-			energy = 0.00
-			for m ∈ monomers
-				Monomers.addNeighbors!(m, monomers)
-			    index = findfirst(==(m), monomers)
-			    
-				# Remove adjacent neighbors
-			    # Check bounds to avoid indexing outside the vector
-			    if index > 1
-			        # Remove the previous monomer (before) from the nearest_neighbors
-			        m.nearest_neighbors = filter(n -> n != monomers[index - 1], 											 m.nearest_neighbors)
-			    end
-			    if index < length(monomers)
-			        # Remove the next monomer (after) from the nearest_neighbors
-			        m.nearest_neighbors = filter(n -> n != monomers[index + 1], 											 m.nearest_neighbors)
-	   			end
-				for n ∈ m.nearest_neighbors
-					energy += Monomers.interaction_mat[Int(m.kind),Int(n.kind)]
-				end
+			maxiter = 2
+			new_pos = Int64[]
+			isValid = false
+			
+			while !isValid && maxiter < 1000
+				
+				idx = rand([1,2])
+				direction = rand([-1,1])
+				move = zeros(2)
+				move[idx] =  direction
+				new_pos = monomers[i-1].pos + move	
+				
+				isValid = all(norm(new_pos - m.pos)!=0 for m ∈ monomers)
+				isValid *= all(new_pos .> 0)
+				maxiter+=1
+				
+		    end
+			
+			if maxiter==1000
+				error("Failed to build a polymer")
+				break
 			end
 			
-			energy = energy         #/2 should I divide by two to account for double 							  #counting of the energy
-			new(N,monomers,energy)
+			push!(monomers, Monomer(i, aminos[i], Int64.(new_pos)))
+		
 		end
+		return monomers
 	end
 
-	function calculateEnergy!(pm::Polymer)
-	energy = 0
-	for m ∈ pm.monomers
+# ╔═╡ decc3588-604e-4fa6-91d9-af8bc8b36ec5
+	function straightPolymer(init::Vector{Int64}, N::Int64)::Vector{Monomer}
+		
+		aminos = [Aminoacid(rand(1:20)) for _ ∈ 1:N]
+		monomers = [Monomer(1, aminos[1], init)]
+	
+		for i in 2:N
+			new_pos = monomers[i-1].pos + [1,0]
+			push!(monomers,Monomer(i, aminos[i],new_pos))
+		end
+		return monomers
+	end
+
+# ╔═╡ 6db49eca-4375-43da-a682-ef18c2cd2c00
+mutable struct Polymer
+	N::Int64 #number of monomers in the structure
+	monomers::Vector{Monomer} #constituents of the polymer
+	energy::Float64
+	grid::Matrix{Int64}
+	is_movable::Vector{Int64}
+	function Polymer(monomers::Vector{Monomer})
+		
+		N = length(monomers)
+		
+		grid = zeros(Int64, 4*N,4*N) 
+		energy = 0.00
+		for m ∈ monomers
+			grid[m.pos[1], m.pos[2]] = m.id
+		end
+		for m ∈ monomers
+			x,y = m.pos
+			
+			indices = [(x+1, y),(x-1, y),(x, y+1),(x, y-1)]
+			
+			pot_neighbors = filter(n-> n != 0, [grid[i,j] for (i,j) ∈ indices])
+			m.nearest_neighbors = monomers[pot_neighbors]
+			if m.id > 1
+				# Remove the previous monomer (before) from the nearest_neighbors
+				m.nearest_neighbors = filter(n -> n != monomers[m.id - 1], 											 m.nearest_neighbors)
+			end
+			if m.id < length(monomers)
+				# Remove the next monomer (after) from the nearest_neighbors
+				m.nearest_neighbors = filter(n -> n != monomers[m.id + 1], 											 m.nearest_neighbors)
+			end
+			for n ∈ m.nearest_neighbors
+				energy += interaction_mat[Int(m.kind),Int(n.kind)]
+			end
+		end
+		energy = energy/2        #/2 to account for double counting of the energy
+		new(N,monomers,energy, grid, Vector{Int64}())
+	end
+end
+
+# ╔═╡ 336031df-80a6-4cff-b886-734b1700d1ba
+function availableMoves!(mm::Monomer, pm::Polymer)
+    nrows, ncols = size(pm.grid)
+	row,col = mm.pos
+
+	# Offsets for Up, Down, Left, Right, Diagonals
+	offsets = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1),
+				(-2, 0), (2, 0), (0, -2), (0, 2)]
+
+    neighbors = [
+        [row + dr, col + dc] for (dr, dc) in offsets
+        if 1+1 <= row + dr <= nrows-1 && 1+1 <= col + dc <= ncols-1 #Remember to fix
+				&& pm.grid[row + dr, col + dc] == 0 ]
+	if mm.id > 1
+		neighbors = filter(n->isdistance1(n, pm.monomers[mm.id-1].pos), neighbors)
+	end
+	if mm.id < length(pm.monomers)
+		neighbors = filter(n->isdistance1(n, pm.monomers[mm.id+1].pos), neighbors)
+	end
+	mm.available_moves = neighbors
+	if !isempty(neighbors)
+		push!(pm.is_movable, mm.id)
+	end 
+end
+
+# ╔═╡ 7c5be5a1-e3de-40d8-911c-ee5d25de4b68
+function updateMoves!(pm::Polymer)
+	resize!(pm.is_movable, 0)
+	for m in pm.monomers
+		availableMoves!(m,pm)
+	end
+end
+
+# ╔═╡ 34469721-6260-460d-b039-0dc5fe7e1730
+function moveMonomer!(pm::Polymer, m::Monomer, pos_new::Vector{Int64})
+	
+	pm.monomers[m.id].pos = pos_new
+	pm.grid[m.pos[1], m.pos[2]] = 0
+	pm.grid[pos_new[1], pos_new[2]] = m.id
+
+	old_neighbors = copy(m.nearest_neighbors)
+	resize!(m.nearest_neighbors, 0)
+
+	x,y = m.pos
+	
+	indices = [(x+1, y),(x-1, y),(x, y+1),(x, y-1)]
+	pot_neighbors = filter(n-> n != 0, [pm.grid[i,j] for (i,j) ∈ indices])
+	m.nearest_neighbors = pm.monomers[pot_neighbors]
+	
+	push!([nm for nm ∈ m.nearest_neighbors], m)
+	if m.id > 1
+		# Remove the previous monomer (before) from the nearest_neighbors
+		m.nearest_neighbors = filter(n -> n != pm.monomers[m.id - 1], 											 m.nearest_neighbors)
+	end
+	if m.id < length(pm.monomers)
+		# Remove the next monomer (after) from the nearest_neighbors
+		m.nearest_neighbors = filter(n -> n != pm.monomers[m.id + 1], 											 m.nearest_neighbors)
+	end
+	setdiff!(old_neighbors, m.nearest_neighbors)
+	for nm ∈ old_neighbors
+		idx = findfirst(n -> n === m, pm.monomers[nm.id].nearest_neighbors)
+	    if idx !== nothing
+	        deleteat!(pm.monomers[nm.id].nearest_neighbors, idx)
+	    end
+	end
+	pm.monomers[m.id] = m
+end
+
+# ╔═╡ 4b3c8edd-dfe8-47bc-8394-4a27e62362f5
+function calculateEnergy!(pm::Polymer)
+
+	monomers = pm.monomers
+	energy = 0.0
+
+	for m ∈ monomers	
 		for n ∈ m.nearest_neighbors
 			energy += interaction_mat[Int(m.kind),Int(n.kind)]
 		end
-	end
-	pm.energy = energy        #/2 should I divide by two to account for double						 		  #counting of the energy
-	end
+	end 
+	pm.energy = energy/2
+end 
 
-	function updatePulymer!(pm::Polymer, id::int)
-
-		#identify moved monomer
-	    moved_monomer = pm.monomers[id]
-		moved_monomer.pos = new_position
-
-		#calculate its energy contribution before moving to avoid calculating the whole system over again
-		energy_old = 0
-		for n ∈ moved_monomer.nearest_neighbors
-			energy_old+= Monomers.interaction_mat[Int(moved_monomer.kind),Int(n.kind)]
-			energy_old+= Monomers.interaction_mat[Int(n.kind),Int(moved_monomer.kind)]
-		end
-
-		
-		for monomer in pm.monomers
-	        monomer.nearest_neighbors = filter(n -> n != moved_monomer,
-												monomer.nearest_neighbors)
-	    end
-	    Monomers.addNeighbors!(moved_monomer, pm.monomers)
-	    
-	
-	
-	    # Step 3.2: Add the moved monomer to the neighbors' lists of its new neighbors
-	    for neighbor in moved_monomer.nearest_neighbors
-			Monomers.addNeighbors!(neighbor, pm.monomers)
-	    end
-	    
-	end
-
-end
-
-# ╔═╡ 892fe351-95e6-49dc-a9a0-c3925db82671
-module Metropolis
-	using Random
-	using LinearAlgebra
-	Random.seed!(123)
-
-	n_monomers = 15
-
-	n_sweeps = 100
-
-	temperature = 10 #Kelvin
-
-end
-
-# ╔═╡ 3efe32be-683d-40c1-9e12-68722db16269
-# ╠═╡ disabled = true
-#=╠═╡
+# ╔═╡ d1354649-e83a-46a2-830a-42fb9792a76c
 begin
-	
-	function on_segment(p::Vector{Float64}, q::Vector{Float64}, r::Vector{Float64})::Bool
-	    # Check if q lies on line segment 'pr' with a tolerance for floating-point comparisons
-	    q[1] <= max(p[1], r[1]) + 1e-9 && q[1] + 1e-9 >= min(p[1], r[1]) &&
-	    q[2] <= max(p[2], r[2]) + 1e-9 && q[2] + 1e-9 >= min(p[2], r[2])
-	end
-	
-	function orientation(p::Vector{Float64}, q::Vector{Float64}, r::Vector{Float64})::Int
-	    # Calculate the orientation of ordered triplet (p, q, r)
-	    # The function returns the following values:
-	    # 0 --> p, q and r are collinear
-	    # 1 --> Clockwise
-	    # 2 --> Counterclockwise
-	    val = (q[2] - p[2]) * (r[1] - q[1]) - (q[1] - p[1]) * (r[2] - q[2])
-	    if val == 0
-	        return 0
-	    elseif val > 0
-	        return 1
-	    else
-	        return 2
-	    end
-	end
-	
-	function intersect(p1::Vector{Float64}, q1::Vector{Float64}, p2::Vector{Float64}, q2::Vector{Float64})::Bool
-	    # Find the four orientations needed for the general and special cases
-	    o1 = orientation(p1, q1, p2)
-	    o2 = orientation(p1, q1, q2)
-	    o3 = orientation(p2, q2, p1)
-	    o4 = orientation(p2, q2, q1)
-	
-	    # General case
-	    if o1 != o2 && o3 != o4
-	        return true
-	    end
-	
-	    if o1 == 0 && on_segment(p1, p2, q1)
-	        return true
-	    end
-	    if o2 == 0 && on_segment(p1, q2, q1)
-	        return true
-	    end
-	    if o3 == 0 && on_segment(p2, p1, q2)
-	        return true
-	    end
-	    if o4 == 0 && on_segment(p2, q1, q2)
-	        return true
-	    end
-	
-	    return false
-	end
-end
-  ╠═╡ =#
+	const temperature = 10
+	pm = Polymer(straightPolymer([15,15], 25))
+	println(pm.energy*temperature) #negative signifies lower total energy, aka more favorable 
+	calculateEnergy!(pm) 
+	updateMoves!(pm) 
+	print(pm.is_movable)  
+end  
 
-# ╔═╡ 8edb8340-01f0-4672-8881-0bb223de1b23
-
-
-# ╔═╡ 3a7f2097-5958-46e8-8df2-4175191228ae
-
-
-# ╔═╡ b15e199f-c268-48fd-8532-33549e80f1e6
-heatmap(Monomers.interaction_mat, colormap=:jet, title = "Interaction matrix")
-
-# ╔═╡ b4249c1c-ecec-41c9-aedd-25ed0465c207
-const temperature = 10
-
-# ╔═╡ aef44341-7aeb-439f-bb50-2be260d82b1f
-begin
-		pm = Polymers.Polymer(Polymers.anglePolymer(90.0, 100))
-		print(pm.energy*temperature) #negative signifies lower total energy, aka more favorable
-end
-
-# ╔═╡ 8f2d0e6c-49fb-4afb-869a-1da228ee2dbf
-begin
-
+# ╔═╡ 553b6f8b-13da-4d41-99b6-a07f9b70ea17
+begin 
 	plot()
 	mm = deepcopy(pm.monomers) # we dont change the original system, just the plot 
 	for monomer ∈ mm
-		
+		   
 	    # Plot lines to the nearest neighbors for each monomer
 	    for neighbor ∈ monomer.nearest_neighbors
-	        plot!([monomer.pos[1], neighbor.pos[1]], 
-	              [monomer.pos[2], neighbor.pos[2]], 
+	        plot!([monomer.pos[1], neighbor.pos[1]],
+	              [monomer.pos[2], neighbor.pos[2]],
 	              color = :green, line=(:dash, [2,2]) )
-
+ 
 			#removes the current monomer from the list with nearest neighbors of the its own nearest neighbors to avoid double plotting the dashed line
 			filter!(n -> !(n==monomer), neighbor.nearest_neighbors)
 				 
-	    end
+	    end 
 	end
-	x_positions = [monomer.pos[1] for monomer ∈ pm.monomers]
+	x_positions = [monomer.pos[1] for monomer ∈ pm.monomers] 
 	y_positions = [monomer.pos[2] for monomer ∈ pm.monomers]
+
 	
 	# Create a scatter plot of the positions
 	plot!(x_positions, y_positions, linecolor="black", linewidth=4, alpha = 1)
-	scatter!(x_positions, y_positions, 
+	scatter!(x_positions[2:end], y_positions[2:end], 
 			# xlabel="x position", ylabel="y position", 
 			title="Polymer Positions", color=:red,
+			markersize=5, legend=false) 
+	scatter!([x_positions[1]], [y_positions[1]], 
+			# xlabel="x position", ylabel="y position", 
+			title="Polymer Positions", color=:orange,  
 			markersize=5, legend=false)
+end 
+
+# ╔═╡ e74319cb-31de-4158-bbfa-7d3bbd38f7e8
+
+
+# ╔═╡ 5d4ec72e-6a2f-4870-b1d3-c20ec58d8f5f
+
+
+# ╔═╡ ca9b4368-6f2a-4ac6-98f8-f3d1abead40f
+
+
+# ╔═╡ 1385df4b-8ffe-43f4-9ab8-3b6614ddc786
+function Boltzmann(::Float64, T::Float64)::Float64
+	ΔE = E_new - E_old
+	return exp(-ΔE/T)
 end
 
-# ╔═╡ 72db4d15-5bad-4fe4-9dd4-3c4105c0dcf0
+# ╔═╡ d9499f26-5e66-4afd-b143-cd254dddc80f
+function MonteCarlo!(pm::Polymer, steps::Int64, distribution::Function; seed=123)
+		updateMoves!(pm) 	
 
+	for i ∈ 1:steps
+		
+		pm_old = deepcopy(pm)
+
+		monomer = pm.monomers[rand(pm.is_movable)]
+		new_pos = rand(monomer.available_moves)
+		moveMonomer!(pm, monomer, new_pos)
+
+		pm_new= Polymer(pm.monomers)
+		
+		calculateEnergy!(pm_new)
+		
+		accept = false 
+		println(pm_new.energy)  
+		pm = pm_new 
+		updateMoves!(pm_new) 	
+
+	end 
+end
+
+# ╔═╡ b157438b-9a11-4b5e-979c-4d0ce7100a77
+MonteCarlo!(pm,100000,Boltzmann)  
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1471,17 +1497,25 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
-# ╠═3efe32be-683d-40c1-9e12-68722db16269
-# ╠═0dda387d-1e6c-4d8a-aa36-fd6c8e81b10a
-# ╠═1f10b2d2-0031-407a-a1ca-77e894d4fe05
-# ╠═8edb8340-01f0-4672-8881-0bb223de1b23
-# ╠═3a7f2097-5958-46e8-8df2-4175191228ae
-# ╠═1819bd63-1f7f-4580-9264-6ac9362f3fb5
-# ╠═b15e199f-c268-48fd-8532-33549e80f1e6
-# ╠═b4249c1c-ecec-41c9-aedd-25ed0465c207
-# ╠═aef44341-7aeb-439f-bb50-2be260d82b1f
-# ╠═8f2d0e6c-49fb-4afb-869a-1da228ee2dbf
-# ╠═892fe351-95e6-49dc-a9a0-c3925db82671
-# ╠═72db4d15-5bad-4fe4-9dd4-3c4105c0dcf0
+# ╠═b8433cf2-d049-48e3-82fd-fccc911217d1
+# ╠═fc9d20fc-1581-45e3-8461-961538c7a3c7
+# ╠═a4c4a926-3824-405f-a490-5470198e3bfc
+# ╠═36716b00-e7ba-11ee-119e-0ffc0a40ee38
+# ╠═af29e518-a5db-4dcd-b860-1c329db426a2
+# ╠═50892ac0-c8d8-4f51-bf60-a7fc7e2b7be6
+# ╠═decc3588-604e-4fa6-91d9-af8bc8b36ec5
+# ╠═6db49eca-4375-43da-a682-ef18c2cd2c00
+# ╠═336031df-80a6-4cff-b886-734b1700d1ba
+# ╠═7c5be5a1-e3de-40d8-911c-ee5d25de4b68
+# ╠═34469721-6260-460d-b039-0dc5fe7e1730
+# ╠═4b3c8edd-dfe8-47bc-8394-4a27e62362f5
+# ╠═d1354649-e83a-46a2-830a-42fb9792a76c
+# ╠═553b6f8b-13da-4d41-99b6-a07f9b70ea17
+# ╠═e74319cb-31de-4158-bbfa-7d3bbd38f7e8
+# ╠═5d4ec72e-6a2f-4870-b1d3-c20ec58d8f5f
+# ╠═ca9b4368-6f2a-4ac6-98f8-f3d1abead40f
+# ╠═1385df4b-8ffe-43f4-9ab8-3b6614ddc786
+# ╠═d9499f26-5e66-4afd-b143-cd254dddc80f
+# ╠═b157438b-9a11-4b5e-979c-4d0ce7100a77
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
