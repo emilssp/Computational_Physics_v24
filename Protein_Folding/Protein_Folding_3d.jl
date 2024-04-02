@@ -4,7 +4,7 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ b8433cf2-d049-48e3-82fd-fccc911217d1
+# ╔═╡ f3801580-2e3a-455b-abfa-5da3b67a6292
 begin
 	using Random
 	using Distributions
@@ -12,13 +12,13 @@ begin
 	using LinearAlgebra
 end
 
-# ╔═╡ fc9d20fc-1581-45e3-8461-961538c7a3c7
+# ╔═╡ 65cf102a-40d8-455f-bb84-0e615dde5485
 begin 
 	seed = 1234
 	Random.seed!(1234)
 end
 
-# ╔═╡ a4c4a926-3824-405f-a490-5470198e3bfc
+# ╔═╡ 956d6ad0-f0ef-11ee-01b3-470fbb062b4e
 begin
 	
 	#define aminoacids according to the standard one letter abbreviation and assign 
@@ -49,10 +49,11 @@ begin
 	interaction_mat = rand(Uniform(-4.00, -2.00), 20, 20);
 	interaction_mat = tril(interaction_mat)
 	interaction_mat += interaction_mat' - Diagonal(diag(interaction_mat))
-	heatmap(interaction_mat, colormap=:jet)
+	print()
+	# heatmap(interaction_mat, colormap=:jet)
 end
 
-# ╔═╡ 36716b00-e7ba-11ee-119e-0ffc0a40ee38
+# ╔═╡ 73c6bbcf-74b9-418d-80c4-8e5284040f40
 mutable struct Monomer
 	id::Int64
 	kind::Aminoacid #type of the monomer
@@ -64,12 +65,12 @@ mutable struct Monomer
 	end
 end
 
-# ╔═╡ af29e518-a5db-4dcd-b860-1c329db426a2
+# ╔═╡ 138347d1-e24d-4537-bb8b-8611aac17352
 function isdistance1(pos1, pos2)
     return norm(pos1 - pos2) <= 1
 end
 
-# ╔═╡ 50892ac0-c8d8-4f51-bf60-a7fc7e2b7be6
+# ╔═╡ 79f0e1bc-aa9a-4e9b-b597-0afda7363f69
 function randPolymer(init::Vector{Int64}, N::Int64)::Vector{Monomer}
 	
 	aminos = [Aminoacid(rand(1:20)) for _ ∈ 1:N]
@@ -82,9 +83,9 @@ function randPolymer(init::Vector{Int64}, N::Int64)::Vector{Monomer}
 		
 		while !isValid && maxiter < 1000
 			
-			idx = rand([1,2])
+			idx = rand([1,2,3])
 			direction = rand([-1,1])
-			move = zeros(2)
+			move = zeros(3)
 			move[idx] =  direction
 			new_pos = monomers[i-1].pos + move	
 			
@@ -105,41 +106,41 @@ function randPolymer(init::Vector{Int64}, N::Int64)::Vector{Monomer}
 	return monomers
 end
 
-# ╔═╡ decc3588-604e-4fa6-91d9-af8bc8b36ec5
-	function straightPolymer(init::Vector{Int64}, N::Int64)::Vector{Monomer}
-		
-		aminos = [Aminoacid(rand(1:20)) for _ ∈ 1:N]
-		monomers = [Monomer(1, aminos[1], init)]
+# ╔═╡ 1832fe5b-5ddf-4388-87a6-dfc61ae1cb03
+function straightPolymer(init::Vector{Int64}, N::Int64)::Vector{Monomer}
 	
-		for i in 2:N
-			new_pos = monomers[i-1].pos + [1,0]
-			push!(monomers,Monomer(i, aminos[i],new_pos))
-		end
-		return monomers
-	end
+	aminos = [Aminoacid(rand(1:20)) for _ ∈ 1:N]
+	monomers = [Monomer(1, aminos[1], init)]
 
-# ╔═╡ 6db49eca-4375-43da-a682-ef18c2cd2c00
+	for i in 2:N
+		new_pos = monomers[i-1].pos + [1,0,0]
+		push!(monomers,Monomer(i, aminos[i],new_pos))
+	end
+	return monomers
+end
+
+# ╔═╡ d23809bc-e3bc-4fb6-bce0-dff0121e9215
 mutable struct Polymer
 	N::Int64 #number of monomers in the structure
 	monomers::Vector{Monomer} #constituents of the polymer
 	energy::Float64
-	grid::Matrix{Int64}
+	grid::Array{Int64, 3}
 	is_movable::Vector{Int64}
 	function Polymer(monomers::Vector{Monomer})
 		
 		N = length(monomers)
 		
-		grid = zeros(Int64, 4*N,4*N) 
+		grid = zeros(Int64, 4*N,4*N,4*N) 
 		energy = 0.00
 		for m ∈ monomers
-			grid[m.pos[1], m.pos[2]] = m.id
+			grid[m.pos[1], m.pos[2],m.pos[3]] = m.id
 		end
 		for m ∈ monomers
-			x,y = m.pos
+			x,y,z = m.pos
 			
-			indices = [(x+1, y),(x-1, y),(x, y+1),(x, y-1)]
+			indices = [(x+1, y, z),(x-1, y, z),(x, y+1, z),(x, y-1, z),(x, y, z+1),(x, y, z-1)]
 			
-			pot_neighbors = filter(n-> n != 0, [grid[i,j] for (i,j) ∈ indices])
+			pot_neighbors = filter(n-> n != 0, [grid[i,j,k] for (i,j,k) ∈ indices])
 			m.nearest_neighbors = monomers[pot_neighbors]
 			if m.id > 1
 				# Remove the previous monomer (before) from the nearest_neighbors
@@ -158,34 +159,40 @@ mutable struct Polymer
 	end
 end
 
-# ╔═╡ 336031df-80a6-4cff-b886-734b1700d1ba
+# ╔═╡ 1bfa6589-c333-43e5-a437-d8c09cf98173
+
+
+# ╔═╡ 9c91976f-5abb-4edd-9e14-e4868ea3751a
 function availableMoves!(mm::Monomer, pm::Polymer)
-    nrows, ncols = size(pm.grid)
-	row,col = mm.pos
+    nrows, ncols, nlayers = size(pm.grid)
+    row, col, layer = mm.pos
 
-	# Offsets for Up, Down, Left, Right, Diagonals
-	offsets = [(dr, dc) for dr in -1:1, dc in -1:1 if (dr, dc) != (0, 0)]
+    # Offsets for Up, Down, Left, Right, Diagonals, and inter-layer moves
+    offsets = [(dr, dc, dl) for dr in -1:1, dc in -1:1, dl in -1:1 
+							if (dr, dc, dl) != (0, 0, 0)]
 
+    # Filter the neighbors based on the 3D grid
     neighbors = [
-        [row + dr, col + dc] for (dr, dc) in offsets
-        if 1+1 <= row + dr <= nrows-1 && 1+1 <= col + dc <= ncols-1 #Remember to fix
-				&& pm.grid[row + dr, col + dc] == 0 ]
-	if mm.id > 1
-		neighbors = filter(n->isdistance1(n, pm.monomers[mm.id-1].pos), neighbors)
-	end
-	if mm.id < length(pm.monomers)
-		neighbors = filter(n->isdistance1(n, pm.monomers[mm.id+1].pos), neighbors)
-	end
-	mm.available_moves = neighbors
-	if !isempty(neighbors)
-		push!(pm.is_movable, mm.id)
-	end 
+        [row + dr, col + dc, layer + dl] for (dr, dc, dl) in offsets
+        if 1 <= row + dr <= nrows && 1 <= col + dc <= ncols && 1 <= layer + dl <= nlayers
+            && pm.grid[row + dr, col + dc, layer + dl] == 0
+    ]
+
+    # Filter neighbors based on the distance criteria
+    if mm.id > 1
+        neighbors = filter(n -> isdistance1(n, pm.monomers[mm.id-1].pos), neighbors)
+    end
+    if mm.id < length(pm.monomers)
+        neighbors = filter(n -> isdistance1(n, pm.monomers[mm.id+1].pos), neighbors)
+    end
+
+    mm.available_moves = neighbors
+    if !isempty(neighbors)
+        push!(pm.is_movable, mm.id)
+    end 
 end
 
-# ╔═╡ eaa5a06e-a47a-4d82-990b-5293702b526c
-
-
-# ╔═╡ 7c5be5a1-e3de-40d8-911c-ee5d25de4b68
+# ╔═╡ 64de1b01-fd20-4da4-929b-7c740dec12e3
 function updateMoves!(pm::Polymer)
 	resize!(pm.is_movable, 0)
 	for m in pm.monomers
@@ -193,20 +200,20 @@ function updateMoves!(pm::Polymer)
 	end
 end
 
-# ╔═╡ 34469721-6260-460d-b039-0dc5fe7e1730
+# ╔═╡ 9c97b2b3-a5e6-4e74-af49-49eaa95cea2e
 function moveMonomer!(pm::Polymer, m::Monomer, pos_new::Vector{Int64})
 	
 	pm.monomers[m.id].pos = pos_new
-	pm.grid[m.pos[1], m.pos[2]] = 0
-	pm.grid[pos_new[1], pos_new[2]] = m.id
+	pm.grid[m.pos[1], m.pos[2], m.pos[3]] = 0
+	pm.grid[pos_new[1], pos_new[2], pos_new[3]] = m.id
 
 	old_neighbors = copy(m.nearest_neighbors)
 	resize!(m.nearest_neighbors, 0)
 
-	x,y = m.pos
+	x,y,z = m.pos
 	
-	indices = [(x+1, y),(x-1, y),(x, y+1),(x, y-1)]
-	pot_neighbors = filter(n-> n != 0, [pm.grid[i,j] for (i,j) ∈ indices])
+	indices=[(x+1, y, z),(x-1, y, z),(x, y+1, z),(x, y-1, z),(x, y, z+1),(x, y, z-1)]
+	pot_neighbors = filter(n-> n != 0, [pm.grid[i,j,k] for (i,j,k) ∈ indices])
 	m.nearest_neighbors = pm.monomers[pot_neighbors]
 	
 	push!([nm for nm ∈ m.nearest_neighbors], m)
@@ -228,7 +235,7 @@ function moveMonomer!(pm::Polymer, m::Monomer, pos_new::Vector{Int64})
 	pm.monomers[m.id] = m
 end
 
-# ╔═╡ 4b3c8edd-dfe8-47bc-8394-4a27e62362f5
+# ╔═╡ 076eb6a9-f3da-45e3-9e2e-daad441796f3
 function calculateEnergy!(pm::Polymer)
 
 	monomers = pm.monomers
@@ -242,12 +249,12 @@ function calculateEnergy!(pm::Polymer)
 	pm.energy = energy/2
 end 
 
-# ╔═╡ 541fcfed-921b-42dc-831b-c3ec8afe8552
+# ╔═╡ 5fd1b2ec-38c4-4766-b3db-9e6975b29397
 function calculateEndToEnd(pm)
 	return norm(pm.monomers[end].pos-pm.monomers[1].pos)
 end
 
-# ╔═╡ 9f9af6ac-9a6e-477d-a373-07ec97702375
+# ╔═╡ aa65ad3c-d369-4469-8f0f-3c6367f11db4
 function calculateRoG(pm)
 	coordinates = hcat([monomer.pos for monomer ∈ pm.monomers]...)
     center_of_mass = sum(coordinates, dims=1) ./ size(coordinates, 1)
@@ -255,41 +262,47 @@ function calculateRoG(pm)
     return sqrt(sum(squared_distances) / size(coordinates, 1))
 end
 
-# ╔═╡ ee7ff02a-d8e9-4b2e-aca8-37c22571b5a9
+# ╔═╡ 4e8f9a26-a349-4a48-9160-c2cd573564a5
 function plotPolymer!(plt, pm, i)
-	mm = deepcopy(pm.monomers) # we dont change the original system, just the plot 
-	for monomer ∈ mm
-		
-	    # Plot lines to the nearest neighbors for each monomer
-	    for neighbor ∈ monomer.nearest_neighbors
-	        plot!(plt, [monomer.pos[1], neighbor.pos[1]],
-	              [monomer.pos[2], neighbor.pos[2]],
-	              color = :green, line=(:dash, [2,2]) )
+    mm = deepcopy(pm.monomers) # we don't change the original system, just the plot 
+    for monomer ∈ mm
+        
+        # Plot lines to the nearest neighbors for each monomer in 3D
+        for neighbor ∈ monomer.nearest_neighbors
+            plot!(plt, [monomer.pos[1], neighbor.pos[1]],
+                  [monomer.pos[2], neighbor.pos[2]],
+                  [monomer.pos[3], neighbor.pos[3]], # Add z-coordinates
+                  color = :green, line=(:dash, [2,2]) )
  
-			#removes the current monomer from the list with nearest neighbors of the its own nearest neighbors to avoid double plotting the dashed line
-			filter!(n -> !(n==monomer), neighbor.nearest_neighbors)
-				 
-	    end 
-	end
-	x_positions = [monomer.pos[1] for monomer ∈ pm.monomers] 
-	y_positions = [monomer.pos[2] for monomer ∈ pm.monomers]
+            # Removes the current monomer from the list with nearest neighbors of its own nearest neighbors to avoid double plotting the dashed line
+            filter!(n -> !(n == monomer), neighbor.nearest_neighbors)
+        end 
+    end
+	for j in 1:length(mm)-1
+        plot!(plt, [mm[j].pos[1], mm[j+1].pos[1]],
+              [mm[j].pos[2], mm[j+1].pos[2]],
+              [mm[j].pos[3], mm[j+1].pos[3]], # Add z-coordinates
+              color = :black, linewidth=2 )
+    end
+    x_positions = [monomer.pos[1] for monomer ∈ pm.monomers] 
+    y_positions = [monomer.pos[2] for monomer ∈ pm.monomers]
+    z_positions = [monomer.pos[3] for monomer ∈ pm.monomers] # Add z-coordinates
 
-	
-	# Create a scatter plot of the positions
-	plot!(plt, x_positions, y_positions, linecolor="black", linewidth=4, alpha = 1)
-	scatter!(plt, x_positions[1:end], y_positions[1:end], 
-			color=:red, markersize=5, legend=false, title = "After $i sweeps") 
-	scatter!(plt, [x_positions[1]], [y_positions[1]], 
-			color=:orange, markersize=5, legend=false)
+    # Create a 3D scatter plot of the positions
+    scatter!(plt, x_positions, y_positions, z_positions,
+             color=:red, markersize=5, legend=false,
+             title = "After $i sweeps")
+    scatter!(plt, [x_positions[1]], [y_positions[1]], [z_positions[1]], 
+             color=:orange, markersize=5, legend=false)
 end
 
-# ╔═╡ 1385df4b-8ffe-43f4-9ab8-3b6614ddc786
+# ╔═╡ 6f4aa440-9612-400f-8401-ba145ae78fb8
 function Boltzmann(E_new::Float64, E_old::Float64, T::Float64)::Float64
 	ΔE = E_new - E_old
 	return exp(-ΔE/T)
 end 
 
-# ╔═╡ 0ddd21fd-206d-4202-9389-beb1f117ff30
+# ╔═╡ 6078f599-042e-4645-b60f-12c6c04731c1
 struct Log 
 	steps::Int64
 	energy::Float64
@@ -303,7 +316,7 @@ struct Log
 	end
 end
 
-# ╔═╡ b92ad1ad-d3c0-49ce-bfca-175353c90d65
+# ╔═╡ a7a542b2-610d-4a68-99a6-63afc191b242
 struct Logger
 	header::String
 	logs::Vector{Log}
@@ -316,13 +329,13 @@ struct Logger
 	end
 end
 
-# ╔═╡ 430a3d06-b7aa-42a5-b5ed-570ae4c9ed55
+# ╔═╡ 3e393642-d4c8-4960-bcfd-47f89cdef58a
 function addLog!(logger::Logger, steps::Int64, energy::Float64, 
 				end_to_end::Float64, RoG::Float64, accepted::Int64, rejected::Int64)
 	push!(logger.logs, Log(steps, energy, end_to_end, RoG, accepted, rejected))
 end
 
-# ╔═╡ 586cf36a-e821-49c0-92d0-7d62223748de
+# ╔═╡ 4cf5de63-fe90-4f62-88de-8f5b3e1e7960
 function writeLog(logger::Logger)
 	filename = "raw/" * logger.file
 	io = open(filename, "w+")
@@ -335,10 +348,7 @@ function writeLog(logger::Logger)
 	close(io)
 end
 
-# ╔═╡ 366e85b9-b472-477c-bbf7-a05fa2307f84
-const temperature10 = 10.0
-
-# ╔═╡ d9499f26-5e66-4afd-b143-cd254dddc80f
+# ╔═╡ 55432939-4ed2-4b5c-9323-171ba8277f2d
 function runAndPlotMC!(pm::Polymer, steps::Int64, distribution::Function, 
 						temperature::Float64; seed=123, filelog="MC_log.txt")
 	
@@ -418,7 +428,17 @@ function runAndPlotMC!(pm::Polymer, steps::Int64, distribution::Function,
 	return energies, plt
 end
 
-# ╔═╡ 7c57f81f-c0c3-4d26-87f5-bc5dfa969bde
+# ╔═╡ bbbde681-895e-4d03-a261-7dedc7ef809e
+begin
+	pm = Polymer(randPolymer([20,20,20], 15))
+	energies, plt = runAndPlotMC!(pm, 1000, Boltzmann, 10.0; seed=seed)
+	
+end
+
+# ╔═╡ b5d739d3-d730-427d-b75d-6d91c47f4d74
+plt
+
+# ╔═╡ 2f4b95bb-ac58-49e0-8454-4caf75c6841e
 function MCstep!(pm::Polymer, accepted::Int, rejected::Int, distribution::Function, T::Float64)
 	
 	for j ∈ 1:length(pm.monomers)
@@ -459,7 +479,7 @@ function MCstep!(pm::Polymer, accepted::Int, rejected::Int, distribution::Functi
 	return pm
 end
 
-# ╔═╡ c9ba9a81-7491-48ff-86cd-644e18fcf2a0
+# ╔═╡ bb837549-9ce8-4bf9-be42-9c26ebc7262b
 function MonteCarlo!(pm::Polymer, steps::Int64, distribution::Function, T::Float64; 						seed=1234, filelog="MC_log.txt")
 	
 	logger = Logger(seed, T, length(pm.monomers), filelog)
@@ -493,7 +513,7 @@ function MonteCarlo!(pm::Polymer, steps::Int64, distribution::Function, T::Float
 	return pm, logger
 end
 
-# ╔═╡ c6a21a77-c824-4591-9715-5d28a520a3d4
+# ╔═╡ bf891960-d20a-475c-856b-216b6bed3592
 function initiate(N::Int64, T::Float64; seed=1234)
 	iter = 0
 	pm = Polymer(straightPolymer([20,20], N))
@@ -506,19 +526,7 @@ function initiate(N::Int64, T::Float64; seed=1234)
 	return pm
 end
 
-# ╔═╡ b157438b-9a11-4b5e-979c-4d0ce7100a77
-begin 
-	polymer = initiate(15, 100.0)#Polymer(straightPolymer([20,20], 15))
-	energies, plt = runAndPlotMC!(polymer, 10000, Boltzmann, 10.0; seed=seed)
-end
-
-# ╔═╡ aca7ea51-3f83-48bd-8a82-97ae954bc824
-
-
-# ╔═╡ 24e2ac23-29fd-4ed8-a254-d02fa99e112c
-plt
-
-# ╔═╡ 83544713-2bca-41df-9c57-fce362c512ce
+# ╔═╡ 6e96af32-c54b-42d9-aa48-876ca14396fb
 function running_avg(x)
 	x_avg = cumsum(x)
 	for i ∈ 1:length(x)
@@ -527,55 +535,15 @@ function running_avg(x)
 	return x_avg, 0:10:10*length(x)-1
 end
 
-# ╔═╡ 531c97cd-3ca4-442d-ab88-005c22df0865
+# ╔═╡ 787217f8-d3eb-44ae-af65-8a6c372f1b8b
 begin
+	temperature10 = 10.0
 	energies_avg, steps =  running_avg(energies)
 	plt2 = plot()
 	plot!(steps, energies_avg, 
 		xlabel = "Number of sweeps", ylabel = "Average energy [\$k_B\$K]", 
 		label = "\$T = $(temperature10)\$", linewidth = 2)
 end
-
-# ╔═╡ 0404b3e8-1f22-46fd-96cc-39e667ea1ea6
-
-
-# ╔═╡ f0228744-e4db-41c8-9210-a7418e3203ae
-begin
-	pm = initiate(20, 100.0)	
-	pm, logger = MonteCarlo!(pm, 1000, Boltzmann, 10.0;
-							seed=seed, filelog = "annealing/MC.txt")
-	energies_avg3, steps3 =  running_avg([l.energy for l ∈ logger.logs])
-	plt3 = plot()
-	plot!(steps3, energies_avg3)
-end
-
-# ╔═╡ 80762af7-1245-4b33-acef-c1ce0c484c98
-function annealing(N::Int64)
-	T_arr = 40:-1:1
-	steps = 800
-	pm = initiate(N, 100.0)	
-   	for t in T_arr
-		pm, logger = MonteCarlo!(pm, steps, Boltzmann, Float64(t);
-						seed=seed, filelog = "annealing/MC_$(N)x$(steps)_$(t)_a.txt")
-		writeLog(logger)
-	end
-end
-
-# ╔═╡ a6f2d713-efc2-4f3c-b1e6-bdda136cf264
-begin
-	temp = [10, 40, 70]
-	
-	# Multi-threaded execution
-	Threads.@threads for i in temp
-	    annealing(i)
-	end 
-end
-
-# ╔═╡ 9b1b20b3-2fa6-4ccb-b631-5ba69844349e
-# annealing(40)
-
-# ╔═╡ 082645ec-1f8e-4b58-a4f6-141327139dc4
-# annealing(70)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1748,42 +1716,34 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
-# ╠═b8433cf2-d049-48e3-82fd-fccc911217d1
-# ╠═fc9d20fc-1581-45e3-8461-961538c7a3c7
-# ╠═a4c4a926-3824-405f-a490-5470198e3bfc
-# ╠═36716b00-e7ba-11ee-119e-0ffc0a40ee38
-# ╠═af29e518-a5db-4dcd-b860-1c329db426a2
-# ╠═50892ac0-c8d8-4f51-bf60-a7fc7e2b7be6
-# ╠═decc3588-604e-4fa6-91d9-af8bc8b36ec5
-# ╠═6db49eca-4375-43da-a682-ef18c2cd2c00
-# ╠═336031df-80a6-4cff-b886-734b1700d1ba
-# ╠═eaa5a06e-a47a-4d82-990b-5293702b526c
-# ╠═7c5be5a1-e3de-40d8-911c-ee5d25de4b68
-# ╠═34469721-6260-460d-b039-0dc5fe7e1730
-# ╠═4b3c8edd-dfe8-47bc-8394-4a27e62362f5
-# ╠═541fcfed-921b-42dc-831b-c3ec8afe8552
-# ╠═9f9af6ac-9a6e-477d-a373-07ec97702375
-# ╠═ee7ff02a-d8e9-4b2e-aca8-37c22571b5a9
-# ╠═1385df4b-8ffe-43f4-9ab8-3b6614ddc786
-# ╠═0ddd21fd-206d-4202-9389-beb1f117ff30
-# ╠═b92ad1ad-d3c0-49ce-bfca-175353c90d65
-# ╠═430a3d06-b7aa-42a5-b5ed-570ae4c9ed55
-# ╠═586cf36a-e821-49c0-92d0-7d62223748de
-# ╠═366e85b9-b472-477c-bbf7-a05fa2307f84
-# ╠═d9499f26-5e66-4afd-b143-cd254dddc80f
-# ╠═7c57f81f-c0c3-4d26-87f5-bc5dfa969bde
-# ╠═c9ba9a81-7491-48ff-86cd-644e18fcf2a0
-# ╠═c6a21a77-c824-4591-9715-5d28a520a3d4
-# ╠═b157438b-9a11-4b5e-979c-4d0ce7100a77
-# ╠═aca7ea51-3f83-48bd-8a82-97ae954bc824
-# ╠═24e2ac23-29fd-4ed8-a254-d02fa99e112c
-# ╠═83544713-2bca-41df-9c57-fce362c512ce
-# ╠═531c97cd-3ca4-442d-ab88-005c22df0865
-# ╠═0404b3e8-1f22-46fd-96cc-39e667ea1ea6
-# ╠═f0228744-e4db-41c8-9210-a7418e3203ae
-# ╠═80762af7-1245-4b33-acef-c1ce0c484c98
-# ╠═a6f2d713-efc2-4f3c-b1e6-bdda136cf264
-# ╠═9b1b20b3-2fa6-4ccb-b631-5ba69844349e
-# ╠═082645ec-1f8e-4b58-a4f6-141327139dc4
+# ╠═f3801580-2e3a-455b-abfa-5da3b67a6292
+# ╠═65cf102a-40d8-455f-bb84-0e615dde5485
+# ╠═956d6ad0-f0ef-11ee-01b3-470fbb062b4e
+# ╠═73c6bbcf-74b9-418d-80c4-8e5284040f40
+# ╠═138347d1-e24d-4537-bb8b-8611aac17352
+# ╠═79f0e1bc-aa9a-4e9b-b597-0afda7363f69
+# ╠═1832fe5b-5ddf-4388-87a6-dfc61ae1cb03
+# ╠═d23809bc-e3bc-4fb6-bce0-dff0121e9215
+# ╠═1bfa6589-c333-43e5-a437-d8c09cf98173
+# ╠═9c91976f-5abb-4edd-9e14-e4868ea3751a
+# ╠═64de1b01-fd20-4da4-929b-7c740dec12e3
+# ╠═9c97b2b3-a5e6-4e74-af49-49eaa95cea2e
+# ╠═076eb6a9-f3da-45e3-9e2e-daad441796f3
+# ╠═5fd1b2ec-38c4-4766-b3db-9e6975b29397
+# ╠═aa65ad3c-d369-4469-8f0f-3c6367f11db4
+# ╠═4e8f9a26-a349-4a48-9160-c2cd573564a5
+# ╠═6f4aa440-9612-400f-8401-ba145ae78fb8
+# ╠═6078f599-042e-4645-b60f-12c6c04731c1
+# ╠═a7a542b2-610d-4a68-99a6-63afc191b242
+# ╠═3e393642-d4c8-4960-bcfd-47f89cdef58a
+# ╠═4cf5de63-fe90-4f62-88de-8f5b3e1e7960
+# ╠═55432939-4ed2-4b5c-9323-171ba8277f2d
+# ╠═bbbde681-895e-4d03-a261-7dedc7ef809e
+# ╠═b5d739d3-d730-427d-b75d-6d91c47f4d74
+# ╠═2f4b95bb-ac58-49e0-8454-4caf75c6841e
+# ╠═bb837549-9ce8-4bf9-be42-9c26ebc7262b
+# ╠═bf891960-d20a-475c-856b-216b6bed3592
+# ╠═6e96af32-c54b-42d9-aa48-876ca14396fb
+# ╠═787217f8-d3eb-44ae-af65-8a6c372f1b8b
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

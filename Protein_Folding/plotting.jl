@@ -70,7 +70,7 @@ end
 begin 
 	plt_15 = plot() 
 	for t in T_arr
-		plot!(readLog("annealing/MC_10x2000_$(t)a.txt")[1],  running_avg(readLog("annealing/MC_10x2000_$(t)a.txt")[2]), 
+		plot!(readLog("annealing/MC_10x800_$(t)_a.txt")[1],  running_avg(readLog("annealing/MC_10x800_$(t)_a.txt")[2]), 
 			xlabel = "Number of sweeps", ylabel = "Average energy", 
 			label = "", linewidth = 2)
 		# plot!(legend=:outertopright)
@@ -78,7 +78,10 @@ begin
 plt_15
 end
 
-# ╔═╡ 73ba0efd-7f15-41a3-87cc-1e711c155cfc
+# ╔═╡ 443eb005-0e90-48c4-a5bf-089a29b0e654
+
+
+# ╔═╡ aa274b07-1ad1-4603-9a3f-576c70e43af8
 
 
 # ╔═╡ cd8150ba-30be-41b6-a59d-e4fbed110176
@@ -86,7 +89,7 @@ begin
 	plt_30 = plot() 
 	for t in T_arr
 		
-		plot!(readLog("annealing/MC_40x2000_$(t)a.txt")[1], running_avg(readLog("annealing/MC_40x2000_$(t)a.txt")[2]), 
+		plot!(readLog("annealing/MC_40x800_$(t)_a.txt")[1],  running_avg(readLog("annealing/MC_40x800_$(t)_a.txt")[2]), 
 			xlabel = "Number of sweeps", ylabel = "Average energy", 
 			label = "", linewidth = 2)
 		# plot!(legend=:outertopright)
@@ -94,23 +97,29 @@ begin
 plt_30
 end
 
+# ╔═╡ 7da55871-d847-4d70-8707-f46eaea838a2
+
+
 # ╔═╡ 00ceaabf-8e18-45c5-90e5-295b6aeba7d5
 begin 
 	plt_50 = plot() 
 	for t in T_arr
-		plot!(readLog("annealing/MC_70x2000_$(t)a.txt")[1], running_avg(readLog("annealing/MC_70x2000_$(t)a.txt")[2]), 
+		plot!(readLog("annealing/MC_70x800_$(t)_a.txt")[1], running_avg(readLog("annealing/MC_70x800_$(t)_a.txt")[2]), 
 			xlabel = "Number of sweeps", ylabel = "Average energy", 
 			label = "", linewidth = 2)
 	end
 plt_50
 end
 
+# ╔═╡ 8a90fdf2-d407-4012-b08c-5e1623b65938
+
+
 # ╔═╡ 05c1ab16-8dd3-40dc-b1a7-ccfeee02f480
 function plotET(N, vline)
 	E_avg = Float64[]
 	T_arr = collect(40:-1:1)
 	for t in T_arr
-		E = readLog("annealing/MC_$(N)x2000_$(t)a.txt")[2][50:end]
+		E = readLog("annealing/MC_$(N)x800_$(t)_a.txt")[2][50:end]
 		push!(E_avg, sum(E)/length(E)) 
 	end 
 	plot!(T_arr,E_avg,xflip=true, label = "E_avg, N =$N")
@@ -121,41 +130,41 @@ end
 # ╔═╡ c0fe0aa0-c064-48be-8ffd-b48bc43003fa
 begin
 	plot() 
-	plotET(10,7)
-	plotET(40,7)
-	plotET(70,7)
+	plotET(10,8)
+	plotET(40,8)
+	plotET(70,8)
 end
-
-# ╔═╡ 8bc49e42-6a17-4118-811e-b1995cc0e6fb
-
-
-# ╔═╡ 1a153a1f-3b0d-4ee4-a678-a62d46d089ee
-
-
-# ╔═╡ 661b0dc9-e436-4afe-ae36-bf9a8b6ba6e8
-
 
 # ╔═╡ fe4dd2e0-eb5a-4d9c-b041-67b0a22b92e1
 function plotRoG(N, vline)
 	RoG_avg = Float64[]
 	T_arr = collect(40:-1:1)
 	for t in T_arr
-		RoG = readLog("annealing/MC_$(N)x2000_$(t)a.txt")[4][50:end]
+		RoG = readLog("annealing/MC_$(N)x800_$(t)_a.txt")[4][50:end]
 		push!(RoG_avg, sum(RoG)/length(RoG)) 
 	end 
 	plot!(T_arr, running_avg(RoG_avg),xflip=true, label = "RoG_avg, N =$N")
 	vline!([vline], label = "T = $vline")
-	plot!(legend=:bottomleft)
+	plot!(legend=:left)
 end
 
 # ╔═╡ 6b0ee87e-0a29-418e-88ae-6cd7ed797f66
 begin
 	plot()
-	plotRoG(10,7)
-	plotRoG(40,7)
+	# plotRoG(10,7)
+	# plotRoG(40,7)
 	plotRoG(70,7)
 
 end
+
+# ╔═╡ a21a9a7c-294b-4872-bcdd-cd64ecaf6503
+
+
+# ╔═╡ c3dcf02b-459e-49ea-8b47-10e103999464
+
+
+# ╔═╡ d6a31477-332f-448b-b7e1-f7611976c670
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1227,16 +1236,19 @@ version = "1.4.1+1"
 # ╠═058b0c04-060b-4b84-9a6b-642f8cfeebf0
 # ╠═d2300204-e1e4-436a-b036-104ff17d15d7
 # ╠═a834d25a-491c-4236-ab4e-964afe0f721d
-# ╠═73ba0efd-7f15-41a3-87cc-1e711c155cfc
+# ╠═443eb005-0e90-48c4-a5bf-089a29b0e654
+# ╠═aa274b07-1ad1-4603-9a3f-576c70e43af8
 # ╠═cd8150ba-30be-41b6-a59d-e4fbed110176
+# ╠═7da55871-d847-4d70-8707-f46eaea838a2
 # ╠═00ceaabf-8e18-45c5-90e5-295b6aeba7d5
+# ╠═8a90fdf2-d407-4012-b08c-5e1623b65938
 # ╠═3e046ae0-fb9b-4889-ace0-bec5beeb1c63
 # ╠═05c1ab16-8dd3-40dc-b1a7-ccfeee02f480
 # ╠═c0fe0aa0-c064-48be-8ffd-b48bc43003fa
-# ╠═8bc49e42-6a17-4118-811e-b1995cc0e6fb
-# ╠═1a153a1f-3b0d-4ee4-a678-a62d46d089ee
-# ╠═661b0dc9-e436-4afe-ae36-bf9a8b6ba6e8
 # ╠═fe4dd2e0-eb5a-4d9c-b041-67b0a22b92e1
 # ╠═6b0ee87e-0a29-418e-88ae-6cd7ed797f66
+# ╠═a21a9a7c-294b-4872-bcdd-cd64ecaf6503
+# ╠═c3dcf02b-459e-49ea-8b47-10e103999464
+# ╠═d6a31477-332f-448b-b7e1-f7611976c670
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
