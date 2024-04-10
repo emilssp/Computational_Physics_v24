@@ -18,6 +18,12 @@ begin
 	Random.seed!(1234)
 end
 
+# ╔═╡ 1db8918d-04f1-4445-8264-a3275816dc02
+    # Offsets for Up, Down, Left, Right, Diagonals, and inter-layer moves
+    offsets = [(dr, dc, dl) for dr in -1:1, dc in -1:1, dl in -1:1 
+							if (dr, dc, dl) != (0, 0, 0) && norm((dr,dc,dl))==sqrt(2)]
+	
+
 # ╔═╡ 956d6ad0-f0ef-11ee-01b3-470fbb062b4e
 begin
 	
@@ -159,17 +165,10 @@ mutable struct Polymer
 	end
 end
 
-# ╔═╡ 1bfa6589-c333-43e5-a437-d8c09cf98173
-
-
 # ╔═╡ 9c91976f-5abb-4edd-9e14-e4868ea3751a
 function availableMoves!(mm::Monomer, pm::Polymer)
     nrows, ncols, nlayers = size(pm.grid)
     row, col, layer = mm.pos
-
-    # Offsets for Up, Down, Left, Right, Diagonals, and inter-layer moves
-    offsets = [(dr, dc, dl) for dr in -1:1, dc in -1:1, dl in -1:1 
-							if (dr, dc, dl) != (0, 0, 0)]
 
     # Filter the neighbors based on the 3D grid
     neighbors = [
@@ -1718,13 +1717,13 @@ version = "1.4.1+1"
 # ╔═╡ Cell order:
 # ╠═f3801580-2e3a-455b-abfa-5da3b67a6292
 # ╠═65cf102a-40d8-455f-bb84-0e615dde5485
+# ╠═1db8918d-04f1-4445-8264-a3275816dc02
 # ╠═956d6ad0-f0ef-11ee-01b3-470fbb062b4e
 # ╠═73c6bbcf-74b9-418d-80c4-8e5284040f40
 # ╠═138347d1-e24d-4537-bb8b-8611aac17352
 # ╠═79f0e1bc-aa9a-4e9b-b597-0afda7363f69
 # ╠═1832fe5b-5ddf-4388-87a6-dfc61ae1cb03
 # ╠═d23809bc-e3bc-4fb6-bce0-dff0121e9215
-# ╠═1bfa6589-c333-43e5-a437-d8c09cf98173
 # ╠═9c91976f-5abb-4edd-9e14-e4868ea3751a
 # ╠═64de1b01-fd20-4da4-929b-7c740dec12e3
 # ╠═9c97b2b3-a5e6-4e74-af49-49eaa95cea2e

@@ -10,12 +10,19 @@ begin
 	using Distributions
 	using Plots
 	using LinearAlgebra
+	using ProgressLogging
 end
 
 # ╔═╡ fc9d20fc-1581-45e3-8461-961538c7a3c7
 begin 
 	seed = 1234
 	Random.seed!(1234)
+end
+
+# ╔═╡ 5f02291a-51b0-4fb8-8fa7-231b5c35e764
+begin
+	# Offsets for Up, Down, Left, Right, Diagonals
+	const offsets = [(dr, dc) for dr in -1:1, dc in -1:1 if (dr, dc) != (0, 0) && norm((dr, dc)) !=1 ]
 end
 
 # ╔═╡ a4c4a926-3824-405f-a490-5470198e3bfc
@@ -62,12 +69,12 @@ mutable struct Monomer
 	function Monomer(id::Int64, kind::Aminoacid ,pos::Vector{Int64})
 		new(id, kind, Vector{Monomer}(), pos)
 	end
-end
+end 
 
 # ╔═╡ af29e518-a5db-4dcd-b860-1c329db426a2
 function isdistance1(pos1, pos2)
     return norm(pos1 - pos2) <= 1
-end
+end 
 
 # ╔═╡ 50892ac0-c8d8-4f51-bf60-a7fc7e2b7be6
 function randPolymer(init::Vector{Int64}, N::Int64)::Vector{Monomer}
@@ -163,9 +170,6 @@ function availableMoves!(mm::Monomer, pm::Polymer)
     nrows, ncols = size(pm.grid)
 	row,col = mm.pos
 
-	# Offsets for Up, Down, Left, Right, Diagonals
-	offsets = [(dr, dc) for dr in -1:1, dc in -1:1 if (dr, dc) != (0, 0)]
-
     neighbors = [
         [row + dr, col + dc] for (dr, dc) in offsets
         if 1+1 <= row + dr <= nrows-1 && 1+1 <= col + dc <= ncols-1 #Remember to fix
@@ -181,9 +185,6 @@ function availableMoves!(mm::Monomer, pm::Polymer)
 		push!(pm.is_movable, mm.id)
 	end 
 end
-
-# ╔═╡ eaa5a06e-a47a-4d82-990b-5293702b526c
-
 
 # ╔═╡ 7c5be5a1-e3de-40d8-911c-ee5d25de4b68
 function updateMoves!(pm::Polymer)
@@ -245,14 +246,43 @@ end
 # ╔═╡ 541fcfed-921b-42dc-831b-c3ec8afe8552
 function calculateEndToEnd(pm)
 	return norm(pm.monomers[end].pos-pm.monomers[1].pos)
+end 
+
+# ╔═╡ 7da32fd0-bd8e-42cb-a159-94e364007822
+function collectPos(monomers::Vector{Monomer})::Array{Float64,2}
+    positions = Array{Float64,2}(undef, length(monomers), 2)  # Preallocate the array
+    
+    for (i, monomer) in enumerate(monomers)
+        positions[i, :] = monomer.pos
+    end
+    
+    return positions
 end
 
-# ╔═╡ 9f9af6ac-9a6e-477d-a373-07ec97702375
+
+# ╔═╡ f41f47a3-2e53-4765-971b-5d9ca1357fc4
 function calculateRoG(pm)
-	coordinates = hcat([monomer.pos for monomer ∈ pm.monomers]...)
-    center_of_mass = sum(coordinates, dims=1) ./ size(coordinates, 1)
-    squared_distances = sum((coordinates .- center_of_mass).^2, dims=2)
-    return sqrt(sum(squared_distances) / size(coordinates, 1))
+	
+	coordinates = collectPos(pm.monomers)
+    center_of_mass = mean(coordinates, dims=1)
+    squared_distances = sum((coordinates .- center_of_mass).^2)
+    return sqrt(squared_distances / size(coordinates, 1))
+end 
+
+# ╔═╡ 9b011701-e2a5-4d47-b5ab-769bd7f6fcca
+begin
+	#Some playing around with arrays to test some stuff 
+	A1 = [1.0,0.0]
+	A2 = [2.0,0.0]
+	A3 = [1.5,0.0]
+	poss = [A1,A2,A3]
+	cat = Array{Float64,2}(undef, length(poss), 2)
+	for (i,pi) in enumerate(poss)
+		cat[i,:] = pi
+	end
+	print(cat)
+    com = mean(cat, dims=1)
+	print(com)
 end
 
 # ╔═╡ ee7ff02a-d8e9-4b2e-aca8-37c22571b5a9
@@ -281,13 +311,19 @@ function plotPolymer!(plt, pm, i)
 			color=:red, markersize=5, legend=false, title = "After $i sweeps") 
 	scatter!(plt, [x_positions[1]], [y_positions[1]], 
 			color=:orange, markersize=5, legend=false)
-end
+end 
+
+# ╔═╡ 0111029b-7ad6-4432-9c8a-769b91576472
+
 
 # ╔═╡ 1385df4b-8ffe-43f4-9ab8-3b6614ddc786
 function Boltzmann(E_new::Float64, E_old::Float64, T::Float64)::Float64
 	ΔE = E_new - E_old
 	return exp(-ΔE/T)
-end 
+end
+
+# ╔═╡ aa89afe5-c24f-4c53-a069-e74ef65a698f
+
 
 # ╔═╡ 0ddd21fd-206d-4202-9389-beb1f117ff30
 struct Log 
@@ -362,7 +398,7 @@ function runAndPlotMC!(pm::Polymer, steps::Int64, distribution::Function,
 	
 	plotPolymer!(plt[1], pm, 0)
 
-	for i ∈ 1:steps
+	@progress for i ∈ 1:steps
 		for j ∈ 1:length(pm.monomers)
 			pm_old = deepcopy(pm)
 	
@@ -398,12 +434,18 @@ function runAndPlotMC!(pm::Polymer, steps::Int64, distribution::Function,
 				pm = deepcopy(pm_old)
 			end
 		end
-		if i % 10 == 0
+		if i % 10 == 0 && i % 50 !=0
+			push!(energies, pm.energy)
+			end_to_end = calculateEndToEnd(pm)
+			addLog!(logger, i, pm.energy, end_to_end, RoG, accepted, rejected)
+		end
+		if i % 50 ==0
 			push!(energies, pm.energy)
 			end_to_end = calculateEndToEnd(pm)
 			RoG = calculateRoG(pm)
 			addLog!(logger, i, pm.energy, end_to_end, RoG, accepted, rejected)
 		end
+		
 		if i == 10
 			plotPolymer!(plt[2], pm, i)
 		end
@@ -417,6 +459,9 @@ function runAndPlotMC!(pm::Polymer, steps::Int64, distribution::Function,
 	writeLog(logger)
 	return energies, plt
 end
+
+# ╔═╡ 4c922d13-1df7-49e5-8238-9556ab7184ea
+
 
 # ╔═╡ 7c57f81f-c0c3-4d26-87f5-bc5dfa969bde
 function MCstep!(pm::Polymer, accepted::Int, rejected::Int, distribution::Function, T::Float64)
@@ -469,25 +514,21 @@ function MonteCarlo!(pm::Polymer, steps::Int64, distribution::Function, T::Float
 	accepted = 0
 	rejected = 0
 	
-	energies = Float64[]
-	
-
-	push!(energies, pm.energy)
-
 	end_to_end = calculateEndToEnd(pm)
 	RoG = calculateRoG(pm)
 	addLog!(logger, 0, pm.energy, end_to_end, RoG, 0, 0)
 	
-
 	for i ∈ 1:steps
 		pm = MCstep!(pm, accepted, rejected, distribution, T)
-		if i % 10 == 0
-			push!(energies, pm.energy)
+		if i % 10 == 0 && i % 50 !=0
+ 			end_to_end = calculateEndToEnd(pm)
+			addLog!(logger, i, pm.energy, end_to_end, RoG, accepted, rejected)
+		end
+		if i % 50 == 0
 			end_to_end = calculateEndToEnd(pm)
 			RoG = calculateRoG(pm)
 			addLog!(logger, i, pm.energy, end_to_end, RoG, accepted, rejected)
 		end
-
 	end 
 	
 	return pm, logger
@@ -509,11 +550,8 @@ end
 # ╔═╡ b157438b-9a11-4b5e-979c-4d0ce7100a77
 begin 
 	polymer = initiate(15, 100.0)#Polymer(straightPolymer([20,20], 15))
-	energies, plt = runAndPlotMC!(polymer, 10000, Boltzmann, 10.0; seed=seed)
-end
-
-# ╔═╡ aca7ea51-3f83-48bd-8a82-97ae954bc824
-
+	energies, plt = runAndPlotMC!(polymer, 10000, Boltzmann, 1.0; seed=seed)
+end 
 
 # ╔═╡ 24e2ac23-29fd-4ed8-a254-d02fa99e112c
 plt
@@ -536,9 +574,6 @@ begin
 		label = "\$T = $(temperature10)\$", linewidth = 2)
 end
 
-# ╔═╡ 0404b3e8-1f22-46fd-96cc-39e667ea1ea6
-
-
 # ╔═╡ f0228744-e4db-41c8-9210-a7418e3203ae
 begin
 	pm = initiate(20, 100.0)	
@@ -551,19 +586,22 @@ end
 
 # ╔═╡ 80762af7-1245-4b33-acef-c1ce0c484c98
 function annealing(N::Int64)
-	T_arr = 40:-1:1
+	T_arr = collect(range(10, step=-0.03, stop=1.0))
 	steps = 800
-	pm = initiate(N, 100.0)	
-   	for t in T_arr
+	pm = initiate(N, 50.0)	
+   	@progress for t in T_arr
 		pm, logger = MonteCarlo!(pm, steps, Boltzmann, Float64(t);
 						seed=seed, filelog = "annealing/MC_$(N)x$(steps)_$(t)_a.txt")
 		writeLog(logger)
 	end
 end
 
+# ╔═╡ 9c6aaea9-5ace-4ff2-8311-ff36547dc591
+annealing(10) 
+
 # ╔═╡ a6f2d713-efc2-4f3c-b1e6-bdda136cf264
-begin
-	temp = [10, 40, 70]
+function runAnnealing()
+	temp = [10, 20, 31]
 	
 	# Multi-threaded execution
 	Threads.@threads for i in temp
@@ -571,23 +609,19 @@ begin
 	end 
 end
 
-# ╔═╡ 9b1b20b3-2fa6-4ccb-b631-5ba69844349e
-# annealing(40)
-
-# ╔═╡ 082645ec-1f8e-4b58-a4f6-141327139dc4
-# annealing(70)
-
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+ProgressLogging = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
 Distributions = "~0.25.107"
 Plots = "~1.40.2"
+ProgressLogging = "~0.1.4"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -596,7 +630,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "ad1a78886f5145a9c45b61935f03232429deb46c"
+project_hash = "e777618c15f0b0ebbcca56c4276ae10c53cf344a"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -1233,6 +1267,12 @@ version = "1.4.3"
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
+[[deps.ProgressLogging]]
+deps = ["Logging", "SHA", "UUIDs"]
+git-tree-sha1 = "80d919dee55b9c50e8d9e2da5eeafff3fe58b539"
+uuid = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
+version = "0.1.4"
+
 [[deps.Qt6Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Vulkan_Loader_jll", "Xorg_libSM_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_cursor_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "libinput_jll", "xkbcommon_jll"]
 git-tree-sha1 = "37b7bb7aabf9a085e0044307e1717436117f2b3b"
@@ -1750,6 +1790,7 @@ version = "1.4.1+1"
 # ╔═╡ Cell order:
 # ╠═b8433cf2-d049-48e3-82fd-fccc911217d1
 # ╠═fc9d20fc-1581-45e3-8461-961538c7a3c7
+# ╠═5f02291a-51b0-4fb8-8fa7-231b5c35e764
 # ╠═a4c4a926-3824-405f-a490-5470198e3bfc
 # ╠═36716b00-e7ba-11ee-119e-0ffc0a40ee38
 # ╠═af29e518-a5db-4dcd-b860-1c329db426a2
@@ -1757,33 +1798,34 @@ version = "1.4.1+1"
 # ╠═decc3588-604e-4fa6-91d9-af8bc8b36ec5
 # ╠═6db49eca-4375-43da-a682-ef18c2cd2c00
 # ╠═336031df-80a6-4cff-b886-734b1700d1ba
-# ╠═eaa5a06e-a47a-4d82-990b-5293702b526c
 # ╠═7c5be5a1-e3de-40d8-911c-ee5d25de4b68
 # ╠═34469721-6260-460d-b039-0dc5fe7e1730
 # ╠═4b3c8edd-dfe8-47bc-8394-4a27e62362f5
 # ╠═541fcfed-921b-42dc-831b-c3ec8afe8552
-# ╠═9f9af6ac-9a6e-477d-a373-07ec97702375
+# ╠═7da32fd0-bd8e-42cb-a159-94e364007822
+# ╠═f41f47a3-2e53-4765-971b-5d9ca1357fc4
+# ╠═9b011701-e2a5-4d47-b5ab-769bd7f6fcca
 # ╠═ee7ff02a-d8e9-4b2e-aca8-37c22571b5a9
+# ╠═0111029b-7ad6-4432-9c8a-769b91576472
 # ╠═1385df4b-8ffe-43f4-9ab8-3b6614ddc786
+# ╠═aa89afe5-c24f-4c53-a069-e74ef65a698f
 # ╠═0ddd21fd-206d-4202-9389-beb1f117ff30
 # ╠═b92ad1ad-d3c0-49ce-bfca-175353c90d65
 # ╠═430a3d06-b7aa-42a5-b5ed-570ae4c9ed55
 # ╠═586cf36a-e821-49c0-92d0-7d62223748de
 # ╠═366e85b9-b472-477c-bbf7-a05fa2307f84
 # ╠═d9499f26-5e66-4afd-b143-cd254dddc80f
+# ╠═4c922d13-1df7-49e5-8238-9556ab7184ea
 # ╠═7c57f81f-c0c3-4d26-87f5-bc5dfa969bde
 # ╠═c9ba9a81-7491-48ff-86cd-644e18fcf2a0
 # ╠═c6a21a77-c824-4591-9715-5d28a520a3d4
 # ╠═b157438b-9a11-4b5e-979c-4d0ce7100a77
-# ╠═aca7ea51-3f83-48bd-8a82-97ae954bc824
 # ╠═24e2ac23-29fd-4ed8-a254-d02fa99e112c
 # ╠═83544713-2bca-41df-9c57-fce362c512ce
 # ╠═531c97cd-3ca4-442d-ab88-005c22df0865
-# ╠═0404b3e8-1f22-46fd-96cc-39e667ea1ea6
 # ╠═f0228744-e4db-41c8-9210-a7418e3203ae
 # ╠═80762af7-1245-4b33-acef-c1ce0c484c98
+# ╠═9c6aaea9-5ace-4ff2-8311-ff36547dc591
 # ╠═a6f2d713-efc2-4f3c-b1e6-bdda136cf264
-# ╠═9b1b20b3-2fa6-4ccb-b631-5ba69844349e
-# ╠═082645ec-1f8e-4b58-a4f6-141327139dc4
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
