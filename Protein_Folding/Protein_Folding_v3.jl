@@ -13,11 +13,17 @@ begin
 	using ProgressLogging
 end
 
+# ╔═╡ 1b2786f7-a2eb-4fcf-8a28-76dbe3e26a53
+using DelimitedFiles
+
 # ╔═╡ fc9d20fc-1581-45e3-8461-961538c7a3c7
 begin 
 	seed = 1234
 	Random.seed!(1234)
 end
+
+# ╔═╡ d2834a63-ddd0-4bbb-a813-c52cb6f048ba
+const PATH = "/plots"
 
 # ╔═╡ 5f02291a-51b0-4fb8-8fa7-231b5c35e764
 # Offsets for Up, Down, Left, Right, Diagonals
@@ -56,6 +62,9 @@ begin
 	interaction_mat += interaction_mat' - Diagonal(diag(interaction_mat))
 	heatmap(interaction_mat, colormap=:jet)
 end
+
+# ╔═╡ ad26bdc7-a0b1-4a76-a581-8958278f9151
+writedlm("./raw/matrix/interaction_mat.txt", interaction_mat, '\t') 
 
 # ╔═╡ 36716b00-e7ba-11ee-119e-0ffc0a40ee38
 mutable struct Monomer
@@ -129,7 +138,9 @@ mutable struct Polymer
 	monomers::Vector{Monomer} #constituents of the polymer
 	energy::Float64
 	grid::Matrix{Int64}
-	function Polymer(monomers::Vector{Monomer})
+	interaction_mat::Matrix{Float64}
+	
+	function Polymer(monomers::Vector{Monomer}, interaction_mat::Matrix{Float64})
 		
 		N = length(monomers)
 		
@@ -158,7 +169,7 @@ mutable struct Polymer
 			end
 		end
 		energy = energy/2        #/2 to account for double counting of the energy
-		new(N,monomers,energy, grid)
+		new(N,monomers,energy, grid, interaction_mat)
 	end
 end
 
@@ -223,7 +234,7 @@ function calculateEnergy!(pm::Polymer)
 
 	for m ∈ monomers	
 		for n ∈ m.nearest_neighbors
-			energy += interaction_mat[Int(m.kind),Int(n.kind)]
+			energy += pm.interaction_mat[Int(m.kind),Int(n.kind)]
 		end
 	end 
 	pm.energy = energy/2
@@ -255,7 +266,7 @@ function calculateRoG(pm)
 end 
 
 # ╔═╡ ee7ff02a-d8e9-4b2e-aca8-37c22571b5a9
-function plotPolymer!(plt, pm, i)
+function plotPolymer!(plt, pm, subtitle)
 	mm = deepcopy(pm.monomers) # we dont change the original system, just the plot 
 	for monomer ∈ mm
 		
@@ -277,22 +288,16 @@ function plotPolymer!(plt, pm, i)
 	# Create a scatter plot of the positions
 	plot!(plt, x_positions, y_positions, linecolor="black", linewidth=4, alpha = 1)
 	scatter!(plt, x_positions[1:end], y_positions[1:end], 
-			color=:red, markersize=5, legend=false, title = "After $i sweeps") 
+			color=:red, markersize=5, legend=false, title = subtitle) 
 	scatter!(plt, [x_positions[1]], [y_positions[1]], 
 			color=:orange, markersize=5, legend=false)
 end 
-
-# ╔═╡ 0111029b-7ad6-4432-9c8a-769b91576472
-
 
 # ╔═╡ 1385df4b-8ffe-43f4-9ab8-3b6614ddc786
 function Boltzmann(E_new::Float64, E_old::Float64, T::Float64)::Float64
 	ΔE = E_new - E_old
 	return exp(-ΔE/T)
 end
-
-# ╔═╡ aa89afe5-c24f-4c53-a069-e74ef65a698f
-
 
 # ╔═╡ 0ddd21fd-206d-4202-9389-beb1f117ff30
 struct Log 
@@ -345,10 +350,8 @@ const temperature10 = 10.0
 
 # ╔═╡ d9499f26-5e66-4afd-b143-cd254dddc80f
 function runAndPlotMC!(pm::Polymer, steps::Int64, distribution::Function, 
-						temperature::Float64; seed=123, filelog="MC_log.txt")
-	
-	logger = Logger(seed, temperature, length(pm.monomers), filelog)
-		
+						temperature::Float64; seed=123)
+			
 	accepted = 0
 	rejected = 0	
 	energies = Float64[]
@@ -357,70 +360,70 @@ function runAndPlotMC!(pm::Polymer, steps::Int64, distribution::Function,
 
 	end_to_end = calculateEndToEnd(pm)
 	RoG = calculateRoG(pm)
-	addLog!(logger, 0, pm.energy, end_to_end, RoG, 0, 0)
 	
 	plt = plot(layout = 4, grid = false)
 	
-	plotPolymer!(plt[1], pm, 0)
+	plotPolymer!(plt[1], pm,  "Initial structure")
 
 	@progress for i ∈ 1:steps
 		for j ∈ 1:length(pm.monomers)
 			pm_old = deepcopy(pm)
 	
 			monomer = rand(pm.monomers)
-			availableMoves!(monomer,pm)	
-			if isempty(monomer.available_moves)
+			availableMoves!(monomer,pm)
+			if isempty(monomer.available_moves) 
 				rejected+=1
 			else
-				new_pos = rand(monomer.available_moves)
-				moveMonomer!(pm, monomer, new_pos)
-		
-				pm_new= Polymer(pm.monomers)
-				
-				calculateEnergy!(pm_new)
-				
+				new_pos = monomer.pos .+ rand(offsets)
 				accept = false 
+	
+				if new_pos ∈ monomer.available_moves
+					moveMonomer!(pm, monomer, new_pos)
 		
-				if pm_old.energy >= pm_new.energy
-					accept = true
-				else
-					b = Boltzmann(pm_new.energy, pm_old.energy, temperature)
-					if b >= rand()
+					pm_new= Polymer(pm.monomers, pm.interaction_mat)
+				
+					calculateEnergy!(pm_new)
+				
+		
+					if pm_old.energy >= pm_new.energy
 						accept = true
-	       			else
-	            		accept = false
+					else
+						b = Boltzmann(pm_new.energy, pm_old.energy, temperature)
+						if b >= rand()
+							accept = true
+						else
+							accept = false
+						end
 					end
+				else
+					rejected+=1
 				end
 				if accept
 					accepted+=1
-					calculateEnergy!(pm_new) 
 					pm = deepcopy(pm_new) 
 				else
 					rejected+=1
-					calculateEnergy!(pm_old) 
 					pm = deepcopy(pm_old)
 				end
 			end
 		end
-		if i % 10 == 0
-			push!(energies, pm.energy)
-			end_to_end = calculateEndToEnd(pm)
-			RoG = calculateRoG(pm)
-			addLog!(logger, i, pm.energy, end_to_end, RoG, accepted, rejected)
-		end
 		if i == 10
-			plotPolymer!(plt[2], pm, i)
+			plotPolymer!(plt[2], pm,  "After $i sweeps")
 		end
 		if i == 100
-			plotPolymer!(plt[3], pm, i)
+			plotPolymer!(plt[3], pm,  "After $i sweeps")
 		end
 		if i == steps
-			plotPolymer!(plt[4], pm, i)
+			plotPolymer!(plt[4], pm,  "After $i sweeps")
 		end
+		push!(energies, pm.energy)
+
 	end 
-	writeLog(logger)
 	return energies, plt
 end
+
+# ╔═╡ ca060552-4a58-48de-a243-29fabe88e78d
+
 
 # ╔═╡ 7c57f81f-c0c3-4d26-87f5-bc5dfa969bde
 function MCstep!(pm::Polymer, accepted::Int, rejected::Int, distribution::Function, T::Float64)
@@ -433,38 +436,44 @@ function MCstep!(pm::Polymer, accepted::Int, rejected::Int, distribution::Functi
 		if isempty(monomer.available_moves) 
 			rejected+=1
 		else
-			new_pos = rand(monomer.available_moves)
-			moveMonomer!(pm, monomer, new_pos)
-	
-			pm_new= Polymer(pm.monomers)
-			
-			calculateEnergy!(pm_new)
-			
+			new_pos = monomer.pos .+ rand(offsets)
 			accept = false 
+
+			if new_pos ∈ monomer.available_moves
+				moveMonomer!(pm, monomer, new_pos)
 	
-			if pm_old.energy >= pm_new.energy
-				accept = true
-			else
-				b = Boltzmann(pm_new.energy, pm_old.energy, T)
-				if b >= rand()
+				pm_new= Polymer(pm.monomers, pm.interaction_mat)
+			
+				calculateEnergy!(pm_new)
+			
+	
+				if pm_old.energy >= pm_new.energy
 					accept = true
 				else
-					accept = false
+					b = Boltzmann(pm_new.energy, pm_old.energy, T)
+					if b >= rand()
+						accept = true
+					else
+						accept = false
+					end
 				end
+			else
+				rejected+=1
 			end
 			if accept
 				accepted+=1
-				calculateEnergy!(pm_new) 
 				pm = deepcopy(pm_new) 
 			else
 				rejected+=1
-				calculateEnergy!(pm_old) 
 				pm = deepcopy(pm_old)
 			end
 		end
 	end
 	return pm
 end
+
+# ╔═╡ 9b702e38-bf41-43af-a671-50b7b4c08ca2
+
 
 # ╔═╡ c9ba9a81-7491-48ff-86cd-644e18fcf2a0
 function MonteCarlo!(pm::Polymer, steps::Int64, distribution::Function, T::Float64; 						seed=1234, filelog="MC_log.txt")
@@ -477,9 +486,9 @@ function MonteCarlo!(pm::Polymer, steps::Int64, distribution::Function, T::Float
 	end_to_end = calculateEndToEnd(pm)
 	RoG = calculateRoG(pm)
 
-	# addLog!(logger, 0, pm.energy, end_to_end, RoG, 0, 0)
+	addLog!(logger, 0, pm.energy, end_to_end, RoG, 0, 0)
 	
-	for i ∈ 1:steps
+	@progress for i ∈ 1:steps
 		pm = MCstep!(pm, accepted, rejected, distribution, T)
 		if i % 10 == 0
 			end_to_end = calculateEndToEnd(pm)
@@ -491,11 +500,11 @@ end
 
 
 # ╔═╡ c6a21a77-c824-4591-9715-5d28a520a3d4
-function initiate(N::Int64, T::Float64; seed=1234)
+function initiate(N::Int64, T::Float64, interaction_mat::Matrix{Float64}; seed=1234)
 	iter = 0
-	pm = Polymer(straightPolymer([20,20], N))
+	pm = Polymer(straightPolymer([20,20], N), interaction_mat)
 
-	while iter<1000 || abs(pm.energy) > 1e-9
+	while iter<5000 || abs(pm.energy) > 1e-9
 		iter+=1 
 		pm = MCstep!(pm, 0, 0, Boltzmann, T)
 	end
@@ -504,13 +513,13 @@ end
 
 # ╔═╡ b157438b-9a11-4b5e-979c-4d0ce7100a77
 begin 
-	polymer = initiate(15, 100.0)
-	# polymer = Polymer(straightPolymer([20,20], 15))
-	energies, plt = runAndPlotMC!(polymer, 10000, Boltzmann, 1.0; seed=seed)
+	# polymer = initiate(15, 100.0)
+	polymer = Polymer(straightPolymer([20,20], 30),interaction_mat)
+	energies, plt = runAndPlotMC!(polymer, 3000, Boltzmann, 10.0; seed=seed) 
 end 
 
 # ╔═╡ 24e2ac23-29fd-4ed8-a254-d02fa99e112c
-plt
+savefig(plt, "./$PATH/folding")
 
 # ╔═╡ 83544713-2bca-41df-9c57-fce362c512ce
 function running_avg(x)
@@ -521,18 +530,67 @@ function running_avg(x)
 	return x_avg, 0:10:10*length(x)-1
 end
 
+# ╔═╡ fe68b063-5b14-40da-b63c-a9959f8c9c23
+function SMA(data::Vector{Float64}, n::Int)
+#used ChatGPT to make the Simple moving average function such that it does not reduce the number of points for easier plotting.
+
+    # Calculate padding lengths
+    left_pad = div(n - 1, 2)
+    right_pad = n - 1 - left_pad
+
+    # Pad data at the beginning and end
+    padded_data = copy(data)
+    prepend!(padded_data, fill(data[1], left_pad))
+    append!(padded_data, fill(data[end], right_pad))
+
+    # Initialize the SMA vector
+    sma = Vector{Float64}(undef, length(data))
+    
+    # Compute the SMA
+    for i in 1:length(sma)
+        sma[i] = mean(padded_data[i:i + n - 1])
+    end
+    
+    return sma
+end
+
 # ╔═╡ 531c97cd-3ca4-442d-ab88-005c22df0865
 begin
 	energies_avg, steps =  running_avg(energies)
-	plt2 = plot() 
+	plt2 = plot(size=(900,300)) 
 	plot!(steps, energies_avg, 
-		xlabel = "Number of sweeps", ylabel = "Average energy [\$k_B\$K]", 
-		label = "\$T = $(temperature10)\$", linewidth = 2)
+		xlabel = "Number of sweeps\n\n\n", ylabel = "\n\nAverage energy [\$k_B\$K]", 
+		label = "\$T = $(temperature10)\$", linewidth = 3,legendfontsize = 20, 
+		xtickfont = 14, ytickfont = 14, xlabelfontsize = 14, ylabelfontsize = 14)
 end
+
+# ╔═╡ f9614ec7-af1c-45f0-bbe4-9d6faf055b58
+savefig(plt2, "./$PATH/folding_energy") 
+
+# ╔═╡ 0875ac5c-f36f-4885-b816-c94fd4ff8366
+begin 
+	energieslow, pltlow = runAndPlotMC!(polymer, 10000, Boltzmann, 1.0; seed=seed)
+end 
+
+# ╔═╡ 413f271b-e02b-4f6d-84f1-7e72bfd95c7c
+begin
+	energies_avglow, stepslow =  running_avg(energieslow)
+	pltengylow = plot(size=(900,300)) 
+	plot!(stepslow, energies_avglow, 
+		xlabel = "Number of sweeps\n\n\n", ylabel = "\n\nAverage energy [\$k_B\$K]", 
+		label = "\$T = $(1.0)\$", linewidth = 3,legendfontsize = 20, 
+		xtickfont = 14, ytickfont = 14, xlabelfontsize = 14, ylabelfontsize = 14)
+end
+
+# ╔═╡ b928f901-beeb-41b9-9cb4-ff232ce814e1
+savefig(pltlow, "./$PATH/folding_low")
+
+# ╔═╡ ec0791ee-aa06-4aa6-83ca-d5c81f8da36b
+savefig(pltengylow, "./$PATH/folding_energy_low") 
 
 # ╔═╡ f0228744-e4db-41c8-9210-a7418e3203ae
 begin
-	pm = initiate(20, 100.0)	
+	pm = initiate(20, 100.0, interaction_mat)	
 	pm, logger = MonteCarlo!(pm, 1000, Boltzmann, 10.0;
 							seed=seed, filelog = "annealing/MC.txt")
 	energies_avg3, steps3 =  running_avg([l.energy for l ∈ logger.logs])
@@ -541,10 +599,9 @@ begin
 end
 
 # ╔═╡ 80762af7-1245-4b33-acef-c1ce0c484c98
-function annealing(N::Int64)
-	T_arr = collect(range(7.5, step=-0.1, stop=0.1))
-	steps = 1000
-	pm = initiate(N, 1000.0)
+function annealing(N::Int64, steps::Int64, interaction_mat::Matrix{Float64})
+	T_arr = collect(range(15, step=-0.5, stop=0.1))
+	pm = initiate(N, 20.0, interaction_mat)
    	@progress for t in T_arr
 		pm, logger = MonteCarlo!(pm, steps, Boltzmann, t;
 						seed=seed, filelog = "annealing/MC_$(N)x$(steps)_$(t).txt")
@@ -552,31 +609,193 @@ function annealing(N::Int64)
 	end
 end
 
-# ╔═╡ 68f63a3a-d869-4431-a9e6-9df92791bc98
-
-
-# ╔═╡ 9c6aaea9-5ace-4ff2-8311-ff36547dc591
-annealing(10) 
-
-# ╔═╡ 50d703ee-527e-4c89-a6e6-69d72a41aad9
+# ╔═╡ f5423037-2cf6-48ee-a148-cc7b1886fa1f
 
 
 # ╔═╡ a6f2d713-efc2-4f3c-b1e6-bdda136cf264
-function runAnnealing()
-	temp = [10, 18, 25]
+function runAnnealing(interaction_mat)
+	temp = [10, 20, 30]
 	
 	# Multi-threaded execution
 	Threads.@threads for i in temp
-	    annealing(i)
+	    annealing(i, 100, interaction_mat)
 	end 
 end
 
 # ╔═╡ 1390cc87-8054-4a66-aa88-aae62be8d30a
-runAnnealing()
+runAnnealing(interaction_mat)
+
+# ╔═╡ f3ee7459-304b-4380-89ee-b065e73f5807
+function genStruct(pm::Polymer, t::Float64, idx::Int64)
+	pm,logger = MonteCarlo!(pm, 100000, Boltzmann, t;
+						seed=seed, filelog = "struct$idx.txt")
+	writeLog(logger)
+	return pm
+end
+
+# ╔═╡ d614adbb-84c2-4e3f-b7a8-309369060a21
+begin
+	struct0 = initiate(30, 50.0, interaction_mat)
+	
+	task1 = Threads.@spawn genStruct(struct0, 1.0, 1)
+	task2 = Threads.@spawn genStruct(struct0, 1.0, 2)
+	
+	struct1 = fetch(task1)
+	struct2 = fetch(task2)
+end
+
+# ╔═╡ 44617744-660c-40c5-8465-52763fa4b4f6
+begin
+	task8a = plot(layout = (1,3), grid = false, size = (900,350), 
+					legendfontsize = 13, labelfontsize = 16, 
+					xtickfontsize = 13, ytickfontsize = 13)
+	
+	plotPolymer!(task8a[1], struct0,  "Primary structure")
+	plotPolymer!(task8a[2], struct1,  "Structure 1")
+	plotPolymer!(task8a[3], struct2,  "Structure 2")
+
+end
+
+# ╔═╡ a4630012-e4ec-4d46-86e0-49c049fda2bd
+savefig(task8a, "plots/structures.png")
+
+# ╔═╡ ec1f7c6f-8281-4c7a-b45a-a77777ed8002
+function readLog(filename)
+	
+	steps = Int[]
+	energy = Float64[]
+	EtE = Float64[]
+	RoG = Float64[]
+	
+ 	open("raw/"*filename, "r") do file
+	    start_reading = false 
+	    for line in eachline(file)
+	        if isempty(strip(line))
+	            if start_reading
+	                # If we've started reading and encounter an empty line, stop reading
+	                break
+	            else
+	                # If we haven't started reading yet, this marks the start
+	                start_reading = true
+	                continue
+	            end
+	        end
+	        
+	        if start_reading
+	            line_data = split(line, ',')
+				print
+	            push!(steps, parse(Int, line_data[1]))
+	            push!(energy, parse(Float64, line_data[2]))
+				push!(EtE, parse(Float64, line_data[3]))
+	            push!(RoG, parse(Float64, line_data[4]))
+	        end
+	    end
+	end 
+	return steps,energy,EtE,RoG
+end
+
+# ╔═╡ 15d59596-b813-4edc-ad56-22fb14b40ce1
+begin
+	struct_energy = plot(xlabel = "Number of sweeps\n\n\n", 
+						 ylabel = "\nTotal energy",  grid = false, size = (1000,350), legendfontsize = 15, xtickfontsize = 15, ytickfontsize = 15, labelfontsize = 18)
+	plot!(struct_energy, readLog("struct1.txt")[1][1:10001],  SMA(readLog("struct1.txt")[2][1:10001],15),  
+				label = "Structure 1", linewidth = 2)
+	plot!(struct_energy, readLog("struct2.txt")[1][1:10001], SMA(readLog("struct2.txt")[2][1:10001],15),
+				label = "Structure 2", linewidth = 2) 
+	savefig(struct_energy,"plots/struct_energy.png")
+	struct_energy
+end
+
+# ╔═╡ fd653924-21ab-43a8-a5bb-39b76f16af2e
+function SA(init::Polymer, Tc::Float64, steps::Int64)
+
+	pm = MonteCarlo!(init, 5000, Boltzmann, Tc;
+						seed=seed, filelog = "")[1]
+	
+	T_arr = collect(range(Tc, step=-0.1, stop=0.1))
+	
+   	@progress for t in T_arr
+		pm, logger = MonteCarlo!(pm, steps, Boltzmann, t;
+						seed=seed, filelog = "SA/MC_$(length(init.monomers))_$(steps)_$(t).txt")
+		writeLog(logger)
+	end
+	return pm
+end
+
+# ╔═╡ 2b94529b-3636-482e-9cb3-f39aefe7c4fd
+pm_min = SA(struct0, 4.3, 1500)
+
+# ╔═╡ 9bb23df9-c868-48b2-acfa-8166aaafc0ed
+begin
+	task8b = plot(layout = (1,2), grid = false, size = (900,350), 
+					legendfontsize = 13, labelfontsize = 14, 
+					xtickfontsize = 13, ytickfontsize = 13, titlefontsize=16)
+	
+	plotPolymer!(task8b[1], pm_min,  "Tertiary structure")
+
+	y=1
+	for t in collect(range(4.2, step=-0.1, stop=0.1))
+		arr2 = y:1:y+150
+		plot!(task8b[2], arr2, SMA(readLog("SA/MC_$(30)_$(1500)_$(t).txt")[2],15), label = "", color=:blue, title = "Energy of the system",
+		xlabel="Number of sweeps\n\n")
+	y+=150
+	end
+	plot!(task8b[2],xticks=0:2000:10000)
+
+	savefig(task8b, "plots/SA_struct.png")
+	task8b
+	
+end
+
+# ╔═╡ 9d0d6c2b-79c8-47d0-bc58-a5ee254b1204
+begin
+	interaction_mat2 = rand(Uniform(-4.00, -2.00), 20, 20);
+	interaction_mat2 = tril(interaction_mat2) .* rand(Uniform(-1, 1), 20, 20)
+	interaction_mat2 += interaction_mat2' - Diagonal(diag(interaction_mat2))
+	heatmap(interaction_mat2)
+end
+
+# ╔═╡ 147805d7-168b-44f5-89e0-5ac31ef034c1
+writedlm("./raw/matrix/interaction_mat2.txt", interaction_mat2, '\t') 
+
+# ╔═╡ 9d99bade-08bb-4df6-b2df-b41d6d29db8e
+annealing(50, 3000, interaction_mat2)
+
+# ╔═╡ 410f9154-15af-401e-805f-0c6027b827f7
+struct09 = initiate(50, 50.0, interaction_mat2)
+
+# ╔═╡ 3e49b0b8-eedd-4405-a453-3060cc70a201
+pm_min2 = SA(struct09, 5.0, 1000)
+
+# ╔═╡ 41967250-8c8d-48ea-8ad3-3029570c4632
+begin
+	task9 = plot(layout = (1,2), grid = false, size = (900,350), 
+					legendfontsize = 13, labelfontsize = 14, 
+					xtickfontsize = 13, ytickfontsize = 13, titlefontsize=16)
+	
+	plotPolymer!(task9[1], pm_min2,  "Tertiary structure")
+
+	z=1
+	for t in collect(range(5.0, step=-0.1, stop=0.1))
+		arr2 = z:1:z+100
+		plot!(task9[2], arr2, SMA(readLog("SA/MC_$(50)_$(1000)_$(t).txt")[2], 15), label = "", color=:blue, title = "Energy of the system",
+		xlabel="Number of sweeps\n\n")
+	z+=100
+	end
+	# plot!(task9[2],xticks=0:2000:10000)
+
+	savefig(task9, "plots/SA_struct2.png")
+	task9
+	
+end
+
+# ╔═╡ 2ba0fc67-73e5-470c-8b17-2dabbc7c01e6
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
@@ -584,6 +803,7 @@ ProgressLogging = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
+DelimitedFiles = "~1.9.1"
 Distributions = "~0.25.107"
 Plots = "~1.40.2"
 ProgressLogging = "~0.1.4"
@@ -595,7 +815,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "e777618c15f0b0ebbcca56c4276ae10c53cf344a"
+project_hash = "0724d74c98d2f9dea40c10b0dbd37acfba90a288"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -1755,8 +1975,11 @@ version = "1.4.1+1"
 # ╔═╡ Cell order:
 # ╠═b8433cf2-d049-48e3-82fd-fccc911217d1
 # ╠═fc9d20fc-1581-45e3-8461-961538c7a3c7
+# ╠═d2834a63-ddd0-4bbb-a813-c52cb6f048ba
+# ╠═1b2786f7-a2eb-4fcf-8a28-76dbe3e26a53
 # ╠═5f02291a-51b0-4fb8-8fa7-231b5c35e764
 # ╠═a4c4a926-3824-405f-a490-5470198e3bfc
+# ╠═ad26bdc7-a0b1-4a76-a581-8958278f9151
 # ╠═36716b00-e7ba-11ee-119e-0ffc0a40ee38
 # ╠═af29e518-a5db-4dcd-b860-1c329db426a2
 # ╠═50892ac0-c8d8-4f51-bf60-a7fc7e2b7be6
@@ -1769,28 +1992,48 @@ version = "1.4.1+1"
 # ╠═9f9af6ac-9a6e-477d-a373-07ec97702375
 # ╠═ad5c2f9a-e15b-418a-9730-c7d7c9ae611d
 # ╠═ee7ff02a-d8e9-4b2e-aca8-37c22571b5a9
-# ╠═0111029b-7ad6-4432-9c8a-769b91576472
 # ╠═1385df4b-8ffe-43f4-9ab8-3b6614ddc786
-# ╠═aa89afe5-c24f-4c53-a069-e74ef65a698f
 # ╠═0ddd21fd-206d-4202-9389-beb1f117ff30
 # ╠═b92ad1ad-d3c0-49ce-bfca-175353c90d65
 # ╠═430a3d06-b7aa-42a5-b5ed-570ae4c9ed55
 # ╠═586cf36a-e821-49c0-92d0-7d62223748de
 # ╠═366e85b9-b472-477c-bbf7-a05fa2307f84
 # ╠═d9499f26-5e66-4afd-b143-cd254dddc80f
+# ╠═ca060552-4a58-48de-a243-29fabe88e78d
 # ╠═7c57f81f-c0c3-4d26-87f5-bc5dfa969bde
+# ╠═9b702e38-bf41-43af-a671-50b7b4c08ca2
 # ╠═c9ba9a81-7491-48ff-86cd-644e18fcf2a0
 # ╠═c6a21a77-c824-4591-9715-5d28a520a3d4
 # ╠═b157438b-9a11-4b5e-979c-4d0ce7100a77
 # ╠═24e2ac23-29fd-4ed8-a254-d02fa99e112c
 # ╠═83544713-2bca-41df-9c57-fce362c512ce
+# ╠═fe68b063-5b14-40da-b63c-a9959f8c9c23
 # ╠═531c97cd-3ca4-442d-ab88-005c22df0865
+# ╠═f9614ec7-af1c-45f0-bbe4-9d6faf055b58
+# ╠═0875ac5c-f36f-4885-b816-c94fd4ff8366
+# ╠═413f271b-e02b-4f6d-84f1-7e72bfd95c7c
+# ╠═b928f901-beeb-41b9-9cb4-ff232ce814e1
+# ╠═ec0791ee-aa06-4aa6-83ca-d5c81f8da36b
 # ╠═f0228744-e4db-41c8-9210-a7418e3203ae
 # ╠═80762af7-1245-4b33-acef-c1ce0c484c98
-# ╠═68f63a3a-d869-4431-a9e6-9df92791bc98
-# ╠═9c6aaea9-5ace-4ff2-8311-ff36547dc591
-# ╠═50d703ee-527e-4c89-a6e6-69d72a41aad9
+# ╠═f5423037-2cf6-48ee-a148-cc7b1886fa1f
 # ╠═a6f2d713-efc2-4f3c-b1e6-bdda136cf264
 # ╠═1390cc87-8054-4a66-aa88-aae62be8d30a
+# ╠═f3ee7459-304b-4380-89ee-b065e73f5807
+# ╠═d614adbb-84c2-4e3f-b7a8-309369060a21
+# ╠═44617744-660c-40c5-8465-52763fa4b4f6
+# ╠═a4630012-e4ec-4d46-86e0-49c049fda2bd
+# ╠═ec1f7c6f-8281-4c7a-b45a-a77777ed8002
+# ╠═15d59596-b813-4edc-ad56-22fb14b40ce1
+# ╠═fd653924-21ab-43a8-a5bb-39b76f16af2e
+# ╠═2b94529b-3636-482e-9cb3-f39aefe7c4fd
+# ╠═9bb23df9-c868-48b2-acfa-8166aaafc0ed
+# ╠═9d0d6c2b-79c8-47d0-bc58-a5ee254b1204
+# ╠═147805d7-168b-44f5-89e0-5ac31ef034c1
+# ╠═9d99bade-08bb-4df6-b2df-b41d6d29db8e
+# ╠═410f9154-15af-401e-805f-0c6027b827f7
+# ╠═3e49b0b8-eedd-4405-a453-3060cc70a201
+# ╠═41967250-8c8d-48ea-8ad3-3029570c4632
+# ╠═2ba0fc67-73e5-470c-8b17-2dabbc7c01e6
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

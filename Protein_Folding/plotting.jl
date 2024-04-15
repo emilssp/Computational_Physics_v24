@@ -10,15 +10,36 @@ using Plots
 # ╔═╡ 3e046ae0-fb9b-4889-ace0-bec5beeb1c63
 using Statistics
 
-# ╔═╡ 90fa45b0-7c8f-41b2-8b9f-1d0798d2be82
-begin
-	using LinearAlgebra
-	# Offsets for Up, Down, Left, Right, Diagonals
-		offsets = [(dr, dc) for dr in -1:1, dc in -1:1 if (dr, dc) != (0, 0) && norm((dr, dc)) !=1 ]
-end
-
 # ╔═╡ d8ff3ea7-8cc5-4e10-9a1a-b2c568c4ad51
 println(VERSION)
+
+# ╔═╡ 47e207bb-5a40-452e-b2de-62352ac54cab
+const PATH = "./plots"
+
+# ╔═╡ 96fceaa0-51ab-4fa8-be7d-d5e598acfedf
+function SMA(data::Vector{Float64}, n::Int)
+#used ChatGPT to make the Simple moving average function such that it does not reduce the number of points for easier plotting.
+
+    # Calculate padding lengths
+    left_pad = div(n - 1, 2)
+    right_pad = n - 1 - left_pad
+
+    # Pad data at the beginning and end
+    padded_data = copy(data)
+    prepend!(padded_data, fill(data[1], left_pad))
+    append!(padded_data, fill(data[end], right_pad))
+
+    # Initialize the SMA vector
+    sma = Vector{Float64}(undef, length(data))
+    
+    # Compute the SMA
+    for i in 1:length(sma)
+        sma[i] = mean(padded_data[i:i + n - 1])
+    end
+    
+    return sma
+end
+
 
 # ╔═╡ 171cc9f9-4ec0-4d8a-8e86-f47b9ba98192
 function running_avg(x)
@@ -53,7 +74,6 @@ function readLog(filename)
 	        
 	        if start_reading
 	            line_data = split(line, ',')
-				print
 	            push!(steps, parse(Int, line_data[1]))
 	            push!(energy, parse(Float64, line_data[2]))
 				push!(EtE, parse(Float64, line_data[3]))
@@ -66,31 +86,32 @@ end
 
 # ╔═╡ 058b0c04-060b-4b84-9a6b-642f8cfeebf0
 begin
-	T_arr = collect(range(7.5, step=-0.1, stop=0.1))
-	N = [10,18,25] 
+	T_arr = collect(range(15.0, step=-0.5, stop=0.1))
+	N = [10,20,30] 
+	sweeps = 5000
 end
 
 # ╔═╡ d2300204-e1e4-436a-b036-104ff17d15d7
-begin 
-	MC100x10000 = readLog("MC_100x2000.txt") 
-	plt_100 = plot()
-	plot!(MC100x10000[1], running_avg(MC100x10000[2]), 
-		xlabel = "Number of sweeps", ylabel = "Average energy [\$k_B\$K]", 
-		label = "\$T = \$", linewidth = 2)
-end
+# begin 
+# 	MC100x10000 = readLog("MC_100x$(sweeps).txt") 
+# 	plt_100 = plot()
+# 	plot!(MC100x10000[1], running_avg(MC100x10000[2]), 
+# 		xlabel = "Number of sweeps", ylabel = "Average energy [\$k_B\$K]", 
+# 		label = "\$T = \$", linewidth = 2)
+# end
 
 # ╔═╡ a834d25a-491c-4236-ab4e-964afe0f721d
 begin 
 	plt_12 = plot() 
 	for t in T_arr
-		plot!(readLog("annealing/MC_$(N[1])x1000_$(t).txt")[1],  running_avg(readLog("annealing/MC_$(N[1])x1000_$(t).txt")[2]), 
+		plot!(readLog("annealing/MC_$(N[1])x$(sweeps)_$(t).txt")[1],  running_avg(readLog("annealing/MC_$(N[1])x$(sweeps)_$(t).txt")[2]), 
 			xlabel = "Number of sweeps", ylabel = "Average energy", 
 			label = "", linewidth = 2)
 	end
 plt_12
 end
 
-# ╔═╡ f0a7ccfb-2de0-4492-817f-b36b6fd792ab
+# ╔═╡ 79d49495-3fb1-4048-b864-eb295d897e2e
 
 
 # ╔═╡ e32f67d4-8a8e-4f03-a14e-ba58ba3a2b18
@@ -98,12 +119,27 @@ begin
 	pp = plot()
 	y = 1
 	for t in T_arr
-		arr = y:1:y+100
-		plot!(pp,arr,running_avg(readLog("annealing/MC_$(N[1])x1000_$(t).txt")[2])[1], label = "")
-		y+=100
+		arr = y:1:y+500
+		plot!(pp,arr,SMA(readLog("annealing/MC_$(N[1])x$(sweeps)_$(t).txt")[2],50), label = "", color=:blue)
+		y+=500
 	end
 	pp  
 end
+
+# ╔═╡ d1f35dac-f608-4860-a609-b5b347325f87
+
+
+# ╔═╡ 543a69bf-841b-47c8-8ee1-dd686adf0222
+
+
+# ╔═╡ 42eae070-7056-401e-ac4e-5950065d0473
+
+
+# ╔═╡ 5e1085f3-6bab-41e1-a59c-35f568e27236
+
+
+# ╔═╡ f41aaa51-a06f-42e0-93d9-42e7d29e13f5
+
 
 # ╔═╡ a473f5b9-0dbc-4f18-a83a-261f3f295209
 begin
@@ -120,7 +156,7 @@ begin
 	plt_24 = plot() 
 	for t in T_arr
 		 
-		plot!(readLog("annealing/MC_$(N[2])x1000_$(t).txt")[1],  running_avg(readLog("annealing/MC_$(N[2])x1000_$(t).txt")[2]), 
+		plot!(readLog("annealing/MC_$(N[2])x$(sweeps)_$(t).txt")[1],  running_avg(readLog("annealing/MC_$(N[2])x$(sweeps)_$(t).txt")[2]), 
 			xlabel = "Number of sweeps", ylabel = "Average energy", 
 			label = "", linewidth = 2)
 		# plot!(legend=:outertopright)
@@ -132,70 +168,268 @@ end
 begin 
 	plt_51 = plot() 
 	for t in T_arr
-		plot!(readLog("annealing/MC_$(N[3])x1000_$(t).txt")[1], running_avg(readLog("annealing/MC_$(N[3])x1000_$(t).txt")[2]), 
-			xlabel = "Number of sweeps", ylabel = "Average energy", 
-			label = "", linewidth = 2)
+		plot!(readLog("annealing/MC_$(N[3])x$(sweeps)_$(t).txt")[1], running_avg(readLog("annealing/MC_$(N[3])x$(sweeps)_$(t).txt")[2]), 
+				xlabel = "Number of sweeps", ylabel = "Average energy", 
+				label = "", linewidth = 2)
 	end
+savefig(plt_51, "$PATH/annealing30")
 plt_51
 end
 
 # ╔═╡ 05c1ab16-8dd3-40dc-b1a7-ccfeee02f480
-function plotET(N, vline)
+function plotET(ax, N, vline)
 	E_avg = Float64[]
 	for t in T_arr
-		E = readLog("annealing/MC_$(N)x1000_$(t).txt")[2][50:end]
+		E = readLog("annealing/MC_$(N)x$(sweeps)_$(t).txt")[2][30:end]
 		push!(E_avg, mean(E)) 
 	end
-	plot!(T_arr, running_avg(E_avg),xflip=true, label = "E_avg, N =$N")
-	vline!([vline], label = "T = $vline") 
-	plot!(legend=:bottomleft) 
+	scatter!(ax, T_arr, SMA(E_avg,15),xflip=true, label = "", color=:royalblue)
+	scatter!(ax, [],[],label = "\$N =$N\$", color=:royalblue)
+	plot!(ax, T_arr, SMA(E_avg,15),xflip=true, label = "")
+
+	vline!(ax, [vline], label = "\$T = $vline\$") 
+	vline!(ax, [vline/2], label = "\$T_c = $(vline/2)\$", color =:red, linewidth = 2) 
+
+	plot!(ax, legend=:bottomleft) 
 end
 
-# ╔═╡ 8606775a-dbb0-49ce-b32c-489e911bec1d
+# ╔═╡ 9ae60854-8cf4-4b2e-948d-a81299444776
 
 
-# ╔═╡ c0fe0aa0-c064-48be-8ffd-b48bc43003fa
+# ╔═╡ f3e5a778-b433-45bf-9f1b-47b92d1f8d22
 begin
-	plot() 
-	plotET(N[1],2)
-	# plotET(N[2], 1)
-	# plotET(N[3],1)
+	plt = plot(layout = (1,3), grid = false, size = (900,350), 
+				legendfontsize = 13, xtickfontsize = 13, ytickfontsize = 13, labelfontsize = 16)
+	plot!(plt, xlabel = "Temperature \$T\$\n\n", subplot = 2)
+	plot!(plt, ylabel = "\n\nAverage Energy \$E_{avg}\$", subplot = 1)
+
+	plotET(plt[1], N[1], 7.2)
+	plotET(plt[2], N[2], 7.5)
+	plotET(plt[3], N[3], 8.4) 
+	savefig(plt, "$PATH/critical_temp")
+	plt 
 end
 
-# ╔═╡ a8287a3f-51f4-4621-8172-e0c6bff202e3
-
-
-# ╔═╡ 4ddc4cd7-a370-4d8e-965f-89f1c85bb692
+# ╔═╡ 36b86fd0-d6fd-4dc3-9321-f7310014de07
 
 
 # ╔═╡ fe4dd2e0-eb5a-4d9c-b041-67b0a22b92e1
 function plotRoG(N, vline)
 	RoG_avg = Float64[]
 	for t in T_arr
-		RoG = readLog("annealing/MC_$(N)x1000_$(t).txt")[4][50:end]
+		RoG = readLog("annealing/MC_$(N)x$(sweeps)_$(t).txt")[4][300:end]
 		push!(RoG_avg, sum(RoG)/length(RoG)) 
 	end 
-	plot!(T_arr, running_avg(RoG_avg)[1],xflip=true, label = "RoG_avg, N =$N")
+	scatter!(T_arr, SMA(RoG_avg, 15),xflip=true, label = "RoG_avg, N =$N")
+	plot!(T_arr, SMA(RoG_avg,15),xflip=true, label = "RoG_avg, N =$N")
 	vline!([vline], label = "T = $vline")
 	plot!(legend=:topleft)
 end
 
+# ╔═╡ f53426e5-9f59-4c06-afb5-708322a5f109
+function plotRoG(ax, N, vline)
+	RoG_avg = Float64[]
+	for t in T_arr
+		RoG = readLog("annealing/MC_$(N)x$(sweeps)_$(t).txt")[4][300:end]
+		push!(RoG_avg, sum(RoG)/length(RoG)) 
+	end 
+	scatter!(ax,T_arr, SMA(RoG_avg, 15),xflip=true, label = "")
+	plot!(ax,T_arr, SMA(RoG_avg,15),xflip=true, label = "")
+	vline!(ax,[vline], label = "T = $vline")
+	scatter!(ax, [],[],label = "\$N =$N\$", color=:royalblue)
+	vline!(ax, [vline/2], label = "\$T_c = $(vline/2)\$", color =:red, linewidth = 2) 
+
+	plot!(ax, legend=:bottomleft) 
+end
+
+# ╔═╡ 1eee74a1-9e26-4e44-bd79-850e987c2be7
+
+
 # ╔═╡ 6b0ee87e-0a29-418e-88ae-6cd7ed797f66
 begin
-	plot() 
-	plotRoG(N[1],2) 
-	# plotRoG(N[2], 1) 
-	# plotRoG(N[3],1)
-
+	pltRoG = plot(layout = (1,3), grid = false, size = (900,350), 
+				legendfontsize = 13, xtickfontsize = 13, ytickfontsize = 13, labelfontsize = 16) 
+	plot!(pltRoG, xlabel = "Temperature \$T\$\n\n", subplot = 2)
+	plot!(pltRoG, ylabel = "\n\n\$RoG_{avg}\$", subplot = 1)
+	plotRoG(pltRoG[1],N[1],7.2) 
+	plotRoG(pltRoG[2],N[2],7.5) 
+	plotRoG(pltRoG[3],N[3],8.4) 
+	savefig(pltRoG, "$PATH/critical_temp_rog")
+	pltRoG
 end 
 
-# ╔═╡ 08759ef3-3962-4ab7-acf7-3c88120fe381
+# ╔═╡ 645ed54b-34bc-4d46-9155-af3f3a3d8df5
+begin
+		ax = plot()
+		for t in collect(range(4.2, step=-0.05, stop=0.05))
+		plot!(ax, readLog("SA/MC_$(30)_$(1500)_$(t).txt")[1],  running_avg(readLog("SA/MC_$(30)_$(1500)_$(t).txt")[2]), 
+			xlabel = "Number of sweeps", ylabel = "Average energy", 
+			label = "", linewidth = 2)
+		end
+ax
+end
+
+# ╔═╡ 0b21f708-9cdb-41cf-aad8-b0c5703ecc06
+begin
+	ax2=plot(grid = false, size = (900,350), 
+				legendfontsize = 13, xtickfontsize = 13, ytickfontsize = 13, labelfontsize = 16)
+	for t in collect(range(4.2, step=-0.05, stop=0.05))
+		arr2 = y:1:y+150
+		plot!(ax2,arr2,SMA(readLog("SA/MC_$(30)_$(1500)_$(t).txt")[2],15), label = "", color=:blue)
+	y+=150
+	end
+	savefig(ax2, "plots/SA_energy.png")
+	ax2
+end
+
+# ╔═╡ 96458be7-6b12-4778-a21d-fb79ebfbed82
+begin 
+	plt_9 = plot() 
+	for t in collect(range(15,step = -0.5,stop = 0.5))
+		plot!(readLog("MC_$(50)x$(3000)_$(t).txt")[1],  running_avg(readLog("MC_$(50)x$(3000)_$(t).txt")[2]), 
+			xlabel = "Number of sweeps", ylabel = "Average energy", 
+			label = "", linewidth = 2)
+	end
+plt_9
+end
+
+# ╔═╡ 8b8e22d5-9837-4b78-b9c5-2ff6dacfdc62
+begin
+	plt_energy9 = plot(grid = false, size = (900,350), 
+					legendfontsize = 13, xtickfontsize = 13, ytickfontsize = 13, labelfontsize = 16)
+	plot!(plt_energy9, xlabel = "Temperature \$T\$\n\n", subplot = 2)
+	plot!(plt_energy9, ylabel = "\n\nAverage Energy \$E_{avg}\$", subplot = 1)
+
+	E_avg = Float64[]
+		for t in T_arr
+			E = readLog("MC_50x3000_$(t).txt")[2][15:end]
+			push!(E_avg, mean(E)) 
+		end
+		scatter!(plt_energy9, T_arr, SMA(E_avg,15),xflip=true, label = "", color=:royalblue)
+		scatter!(plt_energy9, [],[],label = "\$N =$N\$", color=:royalblue)
+		plot!(plt_energy9, T_arr, SMA(E_avg,15),xflip=true, label = "")
+		val = 9
+		vline!(plt_energy9, [val], label = "\$T = $val\$") 
+		vline!(plt_energy9, [val/2], label = "\$T_c = $(val/2)\$", color =:red, linewidth = 2) 
+	
+		plot!(plt_energy9, legend=:bottomleft) 
+end
+
+# ╔═╡ 92cf4e9c-05ca-4136-aa05-47311ea6c0de
+begin 
+	part2_1 = plot() 
+	for t in collect(range(15, step = -0.5, stop = 0.5))
+		plot!(readLog("3d/MC_$(30)x$(1000)_$(t).txt")[1],  running_avg(readLog("3d/MC_$(30)x$(1000)_$(t).txt")[2]), 
+			xlabel = "Number of sweeps", ylabel = "Average energy", 
+			label = "", linewidth = 2)
+	end
+part2_1
+end
+
+# ╔═╡ 1238d32d-c4e4-425a-9e05-3a3ed483e101
+function plotET3d(ax, N, vline)
+	E_avg = Float64[]
+	T_arr = collect(range(15, step = -0.5, stop = 0.5))
+	for t in T_arr
+		E = readLog("3d/MC_$(N)x$(1000)_$(t).txt")[2][50:end]
+		push!(E_avg, mean(E)) 
+	end
+	scatter!(ax, T_arr, SMA(E_avg,15),xflip=true, label = "", color=:royalblue)
+	scatter!(ax, [],[],label = "\$N =$N\$", color=:royalblue)
+	plot!(ax, T_arr, SMA(E_avg,15),xflip=true, label = "")
+
+	vline!(ax, [vline], label = "\$T = $vline\$") 
+	vline!(ax, [vline/2], label = "\$T_c = $(vline/2)\$", color =:red, linewidth = 2) 
+
+	plot!(ax, legend=:bottomleft) 
+end
+
+# ╔═╡ fd38943c-89d7-4d0b-aea0-bdca548918ba
+
+
+# ╔═╡ eabc607a-0bb9-4b47-a000-0519e31b64e4
+begin
+	plt3d = plot(layout = (1,3), grid = false, size = (900,350), 
+				legendfontsize = 13, xtickfontsize = 13, ytickfontsize = 13, labelfontsize = 16)
+	plot!(plt3d, xlabel = "Temperature \$T\$\n\n", subplot = 2)
+	plot!(plt3d, ylabel = "\n\nAverage Energy \$E_{avg}\$", subplot = 1)
+
+	plotET3d(plt3d[1], N[1], 9.5)
+	plotET3d(plt3d[2], N[2], 10.0)
+	plotET3d(plt3d[3], N[3], 10.5) 
+	savefig(plt3d, "$PATH/critical_temp3d")
+	plt3d
+end
+
+# ╔═╡ a85bdc3f-4ae6-414b-8be0-923ea74e0c2f
+
+
+# ╔═╡ 26e8acfd-0c82-494e-9c48-9b126a3f1fa3
+
+
+# ╔═╡ 2278d4cd-b35c-461e-b18c-3ff795810daf
+
+
+# ╔═╡ 99bf1cf6-9877-4438-a0e5-63596bb93837
+
+
+# ╔═╡ 173e5e51-0fb1-4209-81d4-16f1df926f49
+
+
+# ╔═╡ ea875630-2072-4a67-96d3-60f7f9e87f16
+
+
+# ╔═╡ f9cae48a-532c-4ee9-826b-cb96920d7696
+function plotRoG3d(ax, N, vline)
+	RoG_avg = Float64[]
+	T_arr = collect(range(15, step = -0.5, stop = 0.5))
+	for t in T_arr
+		RoG = readLog("3d/MC_$(N)x$(1000)_$(t).txt")[4][50:end]
+		push!(RoG_avg, sum(RoG)/length(RoG)) 
+	end 
+	scatter!(ax,T_arr, SMA(RoG_avg, 15),xflip=true, label = "")
+	plot!(ax,T_arr, SMA(RoG_avg,15),xflip=true, label = "")
+	scatter!(ax, [],[],label = "\$N =$N\$", color=:royalblue)
+	vline!(ax,[vline], label = "\$T = $vline\$")
+	vline!(ax, [vline/2], label = "\$T_c = $(vline/2)\$", color =:red, linewidth = 2) 
+
+	plot!(ax, legend=:bottomleft) 
+end
+
+# ╔═╡ 65b9ba67-5965-4650-88aa-77e490723b69
+
+
+# ╔═╡ 456cdde0-4a20-4696-9ec9-31a33b2229e8
+begin
+	pltRoG3d = plot(layout = (1,3), grid = false, size = (900,350), 
+				legendfontsize = 13, xtickfontsize = 13, ytickfontsize = 13, labelfontsize = 16) 
+	plot!(pltRoG3d, xlabel = "Temperature \$T\$\n\n", subplot = 2)
+	plot!(pltRoG3d, ylabel = "\n\n\$RoG_{avg}\$", subplot = 1)
+	plotRoG3d(pltRoG3d[1],N[1],9.5) 
+	plotRoG3d(pltRoG3d[2],N[2],10.0) 
+	plotRoG3d(pltRoG3d[3],N[3],10.5) 
+	savefig(pltRoG3d, "$PATH/critical_temp_rog3d")
+	pltRoG3d
+end 
+
+# ╔═╡ 2878d0d2-8af8-4049-8774-d5c8b43ea94c
+
+
+# ╔═╡ f3771a20-5362-4887-9eb9-469327f0e496
+
+
+# ╔═╡ d6b99060-b6ff-4ead-9b1c-22863ae8b1c5
+
+
+# ╔═╡ f167af54-d1c7-484b-b4af-d9639005ad36
+
+
+# ╔═╡ a52214fc-07bc-44c8-9c10-ebd57e7497cf
 
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
-LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
@@ -209,7 +443,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "092b5b23877f3f0329f9a8d9947e445155805df0"
+project_hash = "e8ab33556e0e5ef6e8a7aa87e2b4cd4264281fa4"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -1259,26 +1493,54 @@ version = "1.4.1+1"
 # ╔═╡ Cell order:
 # ╠═d8ff3ea7-8cc5-4e10-9a1a-b2c568c4ad51
 # ╠═abd510fd-08d3-4fb5-b141-e9e36448a62b
+# ╠═47e207bb-5a40-452e-b2de-62352ac54cab
+# ╠═96fceaa0-51ab-4fa8-be7d-d5e598acfedf
 # ╠═171cc9f9-4ec0-4d8a-8e86-f47b9ba98192
 # ╠═20ef3bc1-499b-4083-89a5-d4109847d840
 # ╠═058b0c04-060b-4b84-9a6b-642f8cfeebf0
 # ╠═d2300204-e1e4-436a-b036-104ff17d15d7
 # ╠═a834d25a-491c-4236-ab4e-964afe0f721d
-# ╠═f0a7ccfb-2de0-4492-817f-b36b6fd792ab
+# ╠═79d49495-3fb1-4048-b864-eb295d897e2e
 # ╠═e32f67d4-8a8e-4f03-a14e-ba58ba3a2b18
+# ╠═d1f35dac-f608-4860-a609-b5b347325f87
+# ╠═543a69bf-841b-47c8-8ee1-dd686adf0222
+# ╠═42eae070-7056-401e-ac4e-5950065d0473
+# ╠═5e1085f3-6bab-41e1-a59c-35f568e27236
+# ╠═f41aaa51-a06f-42e0-93d9-42e7d29e13f5
 # ╠═a473f5b9-0dbc-4f18-a83a-261f3f295209
 # ╠═9c8018b2-8939-451e-a29d-110dad54edc8
 # ╠═cd8150ba-30be-41b6-a59d-e4fbed110176
 # ╠═00ceaabf-8e18-45c5-90e5-295b6aeba7d5
 # ╠═3e046ae0-fb9b-4889-ace0-bec5beeb1c63
 # ╠═05c1ab16-8dd3-40dc-b1a7-ccfeee02f480
-# ╠═8606775a-dbb0-49ce-b32c-489e911bec1d
-# ╠═c0fe0aa0-c064-48be-8ffd-b48bc43003fa
-# ╠═a8287a3f-51f4-4621-8172-e0c6bff202e3
-# ╠═4ddc4cd7-a370-4d8e-965f-89f1c85bb692
+# ╠═9ae60854-8cf4-4b2e-948d-a81299444776
+# ╠═f3e5a778-b433-45bf-9f1b-47b92d1f8d22
+# ╠═36b86fd0-d6fd-4dc3-9321-f7310014de07
 # ╠═fe4dd2e0-eb5a-4d9c-b041-67b0a22b92e1
+# ╠═f53426e5-9f59-4c06-afb5-708322a5f109
+# ╠═1eee74a1-9e26-4e44-bd79-850e987c2be7
 # ╠═6b0ee87e-0a29-418e-88ae-6cd7ed797f66
-# ╠═08759ef3-3962-4ab7-acf7-3c88120fe381
-# ╠═90fa45b0-7c8f-41b2-8b9f-1d0798d2be82
+# ╠═645ed54b-34bc-4d46-9155-af3f3a3d8df5
+# ╠═0b21f708-9cdb-41cf-aad8-b0c5703ecc06
+# ╠═96458be7-6b12-4778-a21d-fb79ebfbed82
+# ╠═8b8e22d5-9837-4b78-b9c5-2ff6dacfdc62
+# ╠═92cf4e9c-05ca-4136-aa05-47311ea6c0de
+# ╠═1238d32d-c4e4-425a-9e05-3a3ed483e101
+# ╠═fd38943c-89d7-4d0b-aea0-bdca548918ba
+# ╠═eabc607a-0bb9-4b47-a000-0519e31b64e4
+# ╠═a85bdc3f-4ae6-414b-8be0-923ea74e0c2f
+# ╠═26e8acfd-0c82-494e-9c48-9b126a3f1fa3
+# ╠═2278d4cd-b35c-461e-b18c-3ff795810daf
+# ╠═99bf1cf6-9877-4438-a0e5-63596bb93837
+# ╠═173e5e51-0fb1-4209-81d4-16f1df926f49
+# ╠═ea875630-2072-4a67-96d3-60f7f9e87f16
+# ╠═f9cae48a-532c-4ee9-826b-cb96920d7696
+# ╠═65b9ba67-5965-4650-88aa-77e490723b69
+# ╠═456cdde0-4a20-4696-9ec9-31a33b2229e8
+# ╠═2878d0d2-8af8-4049-8774-d5c8b43ea94c
+# ╠═f3771a20-5362-4887-9eb9-469327f0e496
+# ╠═d6b99060-b6ff-4ead-9b1c-22863ae8b1c5
+# ╠═f167af54-d1c7-484b-b4af-d9639005ad36
+# ╠═a52214fc-07bc-44c8-9c10-ebd57e7497cf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

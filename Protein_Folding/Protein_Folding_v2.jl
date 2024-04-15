@@ -22,7 +22,7 @@ end
 # ╔═╡ 5f02291a-51b0-4fb8-8fa7-231b5c35e764
 begin
 	# Offsets for Up, Down, Left, Right, Diagonals
-	const offsets = [(dr, dc) for dr in -1:1, dc in -1:1 if (dr, dc) != (0, 0) && norm((dr, dc)) !=1 ]
+	const offsets = [(dr, dc) for dr in -1:1, dc in -1:1 if (dr, dc) != (0, 0) && norm((dr, dc)) ==sqrt(2) ]
 end
 
 # ╔═╡ a4c4a926-3824-405f-a490-5470198e3bfc
@@ -314,7 +314,11 @@ function plotPolymer!(plt, pm, i)
 end 
 
 # ╔═╡ 0111029b-7ad6-4432-9c8a-769b91576472
-
+begin
+	l= [1,2,3]
+	k = [4,5,6]
+	k[findall(x-> x > 1, l)]
+end
 
 # ╔═╡ 1385df4b-8ffe-43f4-9ab8-3b6614ddc786
 function Boltzmann(E_new::Float64, E_old::Float64, T::Float64)::Float64
@@ -549,9 +553,13 @@ end
 
 # ╔═╡ b157438b-9a11-4b5e-979c-4d0ce7100a77
 begin 
-	polymer = initiate(15, 100.0)#Polymer(straightPolymer([20,20], 15))
+	# polymer = initiate(15, 100.0)
+	polymer = Polymer(straightPolymer([20,20], 15))
 	energies, plt = runAndPlotMC!(polymer, 10000, Boltzmann, 1.0; seed=seed)
 end 
+
+# ╔═╡ 3f1219c6-11a3-40ba-88d0-1e43c8c73414
+
 
 # ╔═╡ 24e2ac23-29fd-4ed8-a254-d02fa99e112c
 plt
@@ -587,11 +595,11 @@ end
 # ╔═╡ 80762af7-1245-4b33-acef-c1ce0c484c98
 function annealing(N::Int64)
 	T_arr = collect(range(10, step=-0.03, stop=1.0))
-	steps = 800
+	steps = 2000
 	pm = initiate(N, 50.0)	
    	@progress for t in T_arr
 		pm, logger = MonteCarlo!(pm, steps, Boltzmann, Float64(t);
-						seed=seed, filelog = "annealing/MC_$(N)x$(steps)_$(t)_a.txt")
+						seed=seed, filelog = "annealing/MC_$(N)x$(steps)_$(t).txt")
 		writeLog(logger)
 	end
 end
@@ -1820,6 +1828,7 @@ version = "1.4.1+1"
 # ╠═c9ba9a81-7491-48ff-86cd-644e18fcf2a0
 # ╠═c6a21a77-c824-4591-9715-5d28a520a3d4
 # ╠═b157438b-9a11-4b5e-979c-4d0ce7100a77
+# ╠═3f1219c6-11a3-40ba-88d0-1e43c8c73414
 # ╠═24e2ac23-29fd-4ed8-a254-d02fa99e112c
 # ╠═83544713-2bca-41df-9c57-fce362c512ce
 # ╠═531c97cd-3ca4-442d-ab88-005c22df0865
