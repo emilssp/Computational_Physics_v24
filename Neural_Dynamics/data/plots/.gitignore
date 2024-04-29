@@ -1,0 +1,4 @@
+# Ignore all the raw data
+*
+
+!.gitignore
