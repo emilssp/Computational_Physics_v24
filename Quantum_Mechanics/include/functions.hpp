@@ -15,13 +15,13 @@ struct EVPsol {
 	mat eigenvecs;
 };
 
-void eigToFile(EVPsol sol, string path, string name);
-EVPsol eigFromFile(string path, string name);	//Loads the eigenvectors from the file
-void potToFile(vec V, string path, string name);
-vec potFromFile(string path, string name);
+void eigToFile(EVPsol sol, string path, string name); // Write eigenvalues to file
+EVPsol eigFromFile(string path, string name);	// Loads the eigenvectors from the file
+void potToFile(vec V, string path, string name);// Write potential to file
+vec potFromFile(string path, string name);// Load potential from eigenvalues to file
 
-cx_vec H_psi(cx_vec psi, double e0, double tau, double w, double t);
-double f(double lambda, double V0);
+cx_vec H_psi(cx_vec psi, double e0, double tau, double w, double t); //multiplies the hamiltonian with the wavefunction
+double f(double lambda, double V0); //support function
 
 uvec nonzeroColsMatrix(cx_mat A);
 
@@ -31,6 +31,3 @@ cx_vec trapz(cx_mat cx_init, double eps0, double tau, double w, double h);
 
 cx_vec solveF(cx_mat init, double eps0, double tau, double w, double h);
 cx_vec thomasAlgorithm(cx_mat A, cx_vec y);
-
-double sine(double t); 
-double SR(double start, double stop, int n);

@@ -246,6 +246,10 @@ int main()
 	tAmp.save(RAW_PATH + "/tau3.csv", csv_ascii);
 	*/
 
+	/*
+//##############################################################
+//####					Rabi oscillations					####
+//##############################################################
 	const double V0 = 100;
 	int n = 1001;
 	vec V = ones(SPACESTEPS) * V0;
@@ -290,7 +294,7 @@ int main()
 	res.save(RAW_PATH+"/testfile.csv", csv_ascii);
 	p_t.save(RAW_PATH + "/pt.csv", csv_ascii);
 	pt_an.save(RAW_PATH + "/pt_an.csv", csv_ascii);
-
+	*/
 	
 	return 0;
 }

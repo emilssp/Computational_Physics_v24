@@ -1,6 +1,8 @@
 #pragma once;
 #include <string>
 
+//defines constants and parameters
+
 constexpr double pi = 3.141592653589793;
 constexpr long double hbar = 1.054571817e-34;
 const std::string RAW_PATH = "../data/raw";
